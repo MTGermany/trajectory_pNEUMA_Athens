@@ -1,0 +1,9 @@
+# length and width of the vehicles (trajectory is at center)
+# vehicle     typeIndex  length   width
+motorcycle    0		 1.5	  0.7
+car	      1		 4.5	  1.8
+medVeh	      2		 6	  2.0
+truck	      3		 10	  2.2
+taxi	      4		 4.5	  1.8
+bus	      5		 10	  2.2
+trafficLight  6		 0.5	  3.0

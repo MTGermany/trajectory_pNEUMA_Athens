@@ -1,8 +1,51 @@
 # user-defined ignores (avoid committing large files)
 
-*.swp
+## Directories not to be published
+mails
+orig
+references_doc
+old
+calibration
+*toAnkit*
+*bugreport*
 
-## Core latex/pdflatex auxiliary files:
+## general files
+*SubmitContribution2pNEUMA*
+README
+
+
+## generated object files
+*.o
+
+## data input files
+*.csv
+
+## generated simulation files by running mic
+*.data
+*.data_s
+*.leaders
+*.followers
+*.FCdata
+*.traj
+*.peaks
+*.heatmap*
+*.rowPerVehTime*
+*.eps
+*.pdf
+*.png
+
+
+## generated general files 
+*~
+int
+tmp
+*_tmp
+log
+save
+*.save
+
+
+## latex/pdflatex auxiliary files:
 *.aux
 *.lof
 *.log
@@ -12,26 +55,3 @@
 *.toc
 *.dvi
 
-## generated object files
-*.o
-
-## generated simulation files by running mic
-*.car*
-*.dat
-*.micdat
-*.x[0-9]*
-*.fund*
-*.ps
-*.eps
-*.tt
-
-## generated general files 
-*_ger.html
-*_ger.js
-*~
-int
-
-## old (before git)
-trunk/src/save/
-trunk/src_jan14/
-trunk/src_old/
