@@ -1,0 +1,24 @@
+
+#!/bin/bash
+ 
+###########################################################
+# sources including embedded models:
+# trafficSim/sources/levmar-2.5/calibTraj.cpp
+# (there also calibDiscrChoice.cpp)
+###########################################################
+
+echo "calibrate first since there may be results from other calibr left"
+if calibTraj 1 0 templateData 1; 
+  then echo "calibration successful"
+  else echo "calibration failed"; exit -1;
+fi
+
+mv templateData.out templateData_IDM_s.out
+
+# because mmv does not allow the -f option
+if test -f templateData_IDM_s.beta0_beta1;
+then rm templateData_IDM_s.beta*;
+fi
+mmv "templateData.beta*" "templateData_IDM_s.beta#1"
+
+templateData_IDM_s.plot

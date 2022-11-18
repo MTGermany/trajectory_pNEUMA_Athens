@@ -1,0 +1,19 @@
+#!/bin/bash
+
+echo "calibrate first since there may be results from other calibr left"
+if calibTraj 0 0 templateData 1; 
+  then echo "calibration successful"
+  else echo "calibration failed"; exit -1;
+fi
+
+mv templateData.out templateData_IDM_loc.out
+
+# because mmv does not allow the -f option
+if test -f templateData_IDM_loc.beta0_beta1;
+then rm templateData_IDM_loc.beta*;
+fi
+mmv "templateData.beta*" "templateData_IDM_loc.beta#1"
+
+templateData_IDM_loc.plot
+
+

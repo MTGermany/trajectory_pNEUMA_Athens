@@ -111,10 +111,18 @@ struct vehicle {
 };
 
 
-// compare function for sorting according to x
+// compare function for sorting a vector of vehicles according to vehicle.x
 
 bool compare_by_x(const vehicle &a, const vehicle &b){
   return a.x < b.x;
+}
+
+// compare function for sorting a vector of vectors
+// according to element [1] of subvector
+// (vector<vector<double>> lanesFinal;)
+
+bool compare_by_secondEntry(const vector<double> &a, const vector<double> &b){
+  return a[1] < b[1];
 }
 
 // vehicle properties
@@ -625,7 +633,12 @@ vector<Trajectory> getLogicalTrajsFromFile(string fname_in){
 transformation to logical coordinates
 based on the y coordinates of the near horizontal road axis with equidistant
 x coordinates {xmin, xmin+dx, ...}
-argument road has tuples {x,y,heat,heading}
+argument road has tuples {x,y,heat,coshead,sinhead}
+@return: x_logical: always starting near zero and increasing 
+                    (rotated if |road heading|>PI/2)
+         y_logical: vertical distance to road axis y
+                    (to the left in driving direction is positive)
+         heading_road: just copied from input, approx PI if reverse
 //#####################################################
 */
 
@@ -682,6 +695,23 @@ and filtered for heading near 0 or pi (reverseDirection=0 or 1, respectively)
 The filter is based on the middle point of a given trajectory
 depending on value of filterForXY34 in .param file, also filtered
 (in the rotated system!) horizontally and vertically
+
+@return: Logical trajectories as vector<Trajectory>
+         - trajectory filtered according to right direction 
+           (determined at the middle of the respective trajectory)
+         - trajectory filtered according to a minimum length: 
+           traj.time.size()>min_dataPoints
+         - trajectory points filtered to the rectangular region 
+           (in the rotated frame)
+           defined by .param if param.filterForXY34 is active
+         - virtual trajectories of traffic lights added if the corresponding
+           .trafficLights or .trafficLightsReverse file found
+         - in case of reverse, the logical frame is rotated by PI
+         - regardless of reverse and rotation, x_logical always increases and 
+           starts near 0, y=0 at the roadAxisLane and positive to the left
+
+Basis: function logicalCoords(xrot,yrot,road)
+
 //#####################################################
 */
 
@@ -697,6 +727,7 @@ vector<Trajectory> calcLogicalTrajs(TuningParameters param,
 				    char* fnameTL){
 					   
   vector<Trajectory> trajs_out;
+  int min_dataPoints=10;
 
   //cout<<"calcLogicalTrajs: road.x.size()="<<road.x.size()<<endl;
 
@@ -786,9 +817,9 @@ vector<Trajectory> calcLogicalTrajs(TuningParameters param,
     } // it loop
 
 
-    // push_back to traj_out only if right direction and >=10 data points
+    // push_back to traj_out only if right direction and >min_dataPoints
 
-    if(traj.time.size()>10){
+    if(int(traj.time.size())>min_dataPoints){
       int itcenter=int(0.5*traj.heading.size());
       //cout<<"traj.heading.size()="<<traj.heading.size()<<endl;
       bool rightDirection=(reverseDirection)
@@ -984,15 +1015,31 @@ void  writeLogicalTrajs(string projName, TuningParameters param,
 
 		    
 
-//#####################################################
-// get/write the local neighbourhood 
-// of the veh with a certain ID_subj
-// fills a vector of vectors containing the neighbor indices=lines in data
-// uses vehPropVec[i].width and vehPropVec[i].length:
-// vehPropVec[i]={moto,car,medVeh,truck,taxi,bus,redTL}
-// if onlyCF, then only the .FCdata file is written, no .leaders or .followers
-// if noMotoTarget, .FCdata file is onl written if not any motorc as target
-//#####################################################
+/*#####################################################
+  get/write the local neighbourhood  of the veh with a certain ID_subj
+  from the input logTrajs. Since logTrajs already is rotated if the reverse
+  direction is true, no "isReverse" parameter needed: The first and last
+  small section of logTrajs is ignored (see local params below)
+  and the output is only started once the first leader is found
+
+@param param:          global parameters 
+                       (constraints xminRot56, xmaxRot56 not used)
+@param vehPropVec:     determines encroachment 
+                       using the .width and .length attr
+@param onlyCF:         if true, only .FCdata file is written, 
+                       no general neighborhood file .leaders or .followers
+@param noMotoCFtarget: .FCdata file is onl written if not any motorc as target
+@param ID_subj:        .FCdata and neighborhood for follower with ID_subj
+@param logTrajs:       input: All logical trajectories (no orientation
+                       needed because this already in logTrajs)
+
+@param leaderCF_tseries: Reference just included to get access from outside
+                         the function for debugging it in the top level
+
+@return:               apart from above reference, 
+                       just writes to files .FCdata (.leaders, .followers)
+                       creates no data structure outside of function
+#####################################################*/
 
 void extractWriteNeighborhood(TuningParameters param,
 			      string projName,
@@ -1004,7 +1051,10 @@ void extractWriteNeighborhood(TuningParameters param,
 			      bool & wroteCF)
 {
 
-  
+  double dxStartIgnored=6.1; // 6.1 drop the first points of the 
+                             // log trajectories for various reasons
+  double dxEndIgnored=1.0;   // Same for the last part of the subject's traj
+
   //!! vehPropVec[i].width: {moto,car,medVeh,truck,taxi,bus,redTL}
 
   int nveh=logTrajs.size();  // shortcut
@@ -1557,18 +1607,18 @@ void extractWriteNeighborhood(TuningParameters param,
 
   if(subjVeh.type!=6){ // no traffic lights as subjets!
 
-    double min_dist=6.1; //!!!
-    bool leaderFound=false; 
+    bool leaderFound=false; // determine the first valid point
     for(int it=0; (!leaderFound)&&(it<nt); it++){
       double covered_dist=subjVeh.x[it]-subjVeh.x[0];
-      leaderFound=(covered_dist>min_dist)&&(leaderCF_tseries[it].ID>0);
+      leaderFound=(covered_dist>dxStartIgnored)&&(leaderCF_tseries[it].ID>0);
       if(leaderFound){it_CFfirst=it;}
     }
     
     leaderFound=false; // determine the last valid point
     for(int it=nt-1; (!leaderFound)&&(it>0); it--){
-      leaderFound=(leaderCF_tseries[it].ID>0);
-      if(leaderFound){it_CFlast=it+1;}
+      double rest_dist=subjVeh.x[nt-1]-subjVeh.x[it];
+      leaderFound=(rest_dist>dxEndIgnored)&&((leaderCF_tseries[it].ID>0));
+      if(leaderFound){it_CFlast=it+1;}// "+1 because loop ends with <it_CFlast
     }
     
 
@@ -1600,7 +1650,8 @@ void extractWriteNeighborhood(TuningParameters param,
 	
   if(wroteCF){ // no traffic lights as subjets!){
 
-    sprintf(fname_out,"%s_veh%i.FCdata", projName.c_str(), ID_subj);
+    sprintf(fname_out,"%s_road%i_veh%i.FCdata",
+	    projName.c_str(), roadAxisLane, ID_subj);
 
     cout<<"Writing "<<fname_out<<endl;
 
@@ -1649,7 +1700,8 @@ void extractWriteNeighborhood(TuningParameters param,
   if(onlyCF){return;}
   
   
-  sprintf(fname_out,"%s_veh%i.leaders", projName.c_str(), ID_subj);
+  sprintf(fname_out,"%s_road%i_veh%i.leaders",
+	  projName.c_str(), roadAxisLane, ID_subj);
   //================================================================
 
   cout<<"Writing "<<fname_out<<endl;
@@ -1687,7 +1739,8 @@ void extractWriteNeighborhood(TuningParameters param,
 
 
 
-  sprintf(fname_out,"%s_veh%i.followers", projName.c_str(), ID_subj);
+  sprintf(fname_out,"%s_road%i_veh%i.followers",
+	  projName.c_str(), roadAxisLane, ID_subj);
   //================================================================
 
   cout<<"Writing "<<fname_out<<endl;
@@ -2655,10 +2708,9 @@ void identifyWriteLanes(string projName, TuningParameters param,
     // smooth the resulting ycoords vectors of each lane
 
     int dnCutSmooth=int(param.dsSmooth_lane/param.distBetweenCuts+0.5);
-    //vector<double>oneLaneSmooth=stat.smoothTriang(oneLane,dnCutSmooth);
 
     int ncut=oneLane.size()/4;
-    //cout<<"ilane="<<ilane<<" ncut="<<ncut<<" dnCutSmooth="<<dnCutSmooth<<endl;
+
     vector<double>lane_y(ncut);
     for(int icut=0; icut<ncut; icut++){
       lane_y[icut]=oneLane[4*icut+1];
@@ -2692,7 +2744,17 @@ void identifyWriteLanes(string projName, TuningParameters param,
 
   } // loop over ilane
 
- 
+
+  sort(lanesFinal.begin(), lanesFinal.end(), compare_by_secondEntry);
+  
+  for(int ilane=0; ilane<int(lanesFinal.size()); ilane++){
+    cout <<"identifyWriteLanes: ilane="<<ilane
+	 
+	 <<"\n first y val lanesFinal[ilane][1]="<<lanesFinal[ilane][1]
+	 <<"\n first heading lanesFinal[ilane][3]="<<lanesFinal[ilane][3]
+	 <<endl;
+  }
+  
   //##########################################################
   // identifyWriteLanes(6): write proj.peaks
   //##########################################################
@@ -2829,7 +2891,8 @@ int main(int argc, char* argv[]) {
 	 <<" extractTraj_pNEUMA 20181024_d8_0900_0930.csv 4 2 0"<<endl
 	 <<" extractTraj_pNEUMA 20181024_d8_0900_0930.csv 4 4 1"<<endl
 	 <<" extractTraj_pNEUMA 20181024_d8_0900_0930.csv 5 2 1004"<<endl
-	 <<" extractTraj_pNEUMA 20181024_d1_0900_0930.csv 5 2 1003"<<endl
+	 <<" extractTraj_pNEUMA 20181024_d8_0900_0930.csv 5 2 1004"<<endl
+	 <<" extractTraj_pNEUMA 20181024_d8_0900_0930.csv 5 4 2224"<<endl
 	 <<" extractTraj_pNEUMA 20181024_d1_0900_0930.csv 6 2"<<endl
 	 <<endl
 	 <<endl;
@@ -3144,9 +3207,9 @@ int main(int argc, char* argv[]) {
 	    roadAxisLane, "traj");
     vector<Trajectory> logTrajs=getLogicalTrajsFromFile(infile);
 
-    int diffLane=0; // corresponds to, e.g., plot of _road2_lane2
-    int ID=getIDnearestTo(115, 950, diffLane, param, logTrajs); //!!!
-    cout<<"ID="<<ID<<endl;
+    //int diffLane=0; // corresponds to, e.g., plot of _road2_lane2
+    //int ID=getIDnearestTo(115, 950, diffLane, param, logTrajs); //!!!
+    //cout<<"ID="<<ID<<endl;
     
     // calculate and write the neighborhood
     
@@ -3155,6 +3218,8 @@ int main(int argc, char* argv[]) {
     vector<vehicle> leaderCF_tseries;
     bool wroteCF;
 
+    // test reverse (lane 4) with e.g., 20181024_d8_0830_0900_veh2244
+    
     extractWriteNeighborhood(param, projName, onlyCF, noMotoCFtarget,
 			     ID_subj, roadAxisLane, vehPropVec,
 			     logTrajs, leaderCF_tseries, wroteCF);
@@ -3162,13 +3227,24 @@ int main(int argc, char* argv[]) {
     return(0);
  }
 
-  // #########################################################
-  // 6: mass-produce .FCdata files for calibration
-  // #########################################################
+  /*#########################################################
+   6: mass-produce .FCdata files for calibration
+   serial application of extractWriteNeighborhood
+   (is economic since the logical trajectory file needs to be
+   read only once)
+   filters: 
+     1. subject has minDistance=300 m
+     2. not any of the leaders must be a motorcycle
+     3. subject (follower) no motorcycle     "&&(traj.type!=0)"  
+     4. subject (follower) no taxi           "&&(traj.type!=4)"  
+     5. All the restrictions of the logical trajs (isReverse, 
+        possibly boxConstraints)
+
+  #########################################################*/
 
   if(WhatToDo==6){
 
-    bool onlyCF=false;
+    bool onlyCF=true;
     double minDistance=300;
     bool noMotoCFleader=true; // follower filter: no motos or taxis
     // long filter param.dxmax, lat filter param.dymax

@@ -22,10 +22,10 @@
 1	 filterForXY56	   {0=false, 1=true}  (a little bit more restrictive)
 0	 xmin		   general filter [m] for heatmap (unrotated)
 -550	 xminRot34  (-550) gen. filter [m] for heatmap, peakfinding, lane axes
--9999	 xminRot56  (-540) NOT USED (nov22)
+-540	 xminRot56	   more restrictive to avoid @ CF init/final irregul
 0	 xmax		   
 -150	 xmaxRot34  (-150) if too restr in WhatToDo=4, only TL data in .traj
--9999	 xmaxRot56  (-140) NOT USED (nov22)	   
+-140	 xmaxRot56	   
 0	 ymin		   
 1150	 yminRot34  (1150)		   
 0	 ymax		   

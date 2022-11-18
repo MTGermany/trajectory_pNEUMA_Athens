@@ -1,0 +1,43 @@
+#FIG 3.2  Produced by xfig version 3.2.6a
+Portrait
+Center
+Metric
+A4
+100.00
+Single
+-2
+1200 2
+6 6525 1350 10800 5310
+2 5 0 1 0 -1 60 -1 -1 0.000 0 0 -1 0 0 5
+	0 figElem/templateData_IDM_loc.tseries_a.eps
+	 6525 1350 10800 1350 10800 3594 6525 3594 6525 1350
+2 5 0 1 0 -1 48 -1 -1 0.000 0 0 -1 0 0 5
+	0 figElem/templateData_IDM_loc.beta0_beta3.eps
+	 1125 4888 4410 4888 4410 8100 1125 8100 1125 4888
+2 5 0 1 0 -1 49 -1 -1 0.000 0 0 -1 0 0 5
+	0 figElem/templateData_IDM_loc.beta0_beta2.eps
+	 1125 2925 4410 2925 4410 6137 1125 6137 1125 2925
+2 5 0 1 0 -1 54 -1 -1 0.000 0 0 -1 0 0 5
+	0 figElem/templateData_IDM_loc.beta1_beta2.eps
+	 3285 2921 6570 2921 6570 6133 3285 6133 3285 2921
+2 5 0 1 0 -1 53 -1 -1 0.000 0 0 -1 0 0 5
+	0 figElem/templateData_IDM_loc.beta1_beta3.eps
+	 3285 4888 6570 4888 6570 8100 3285 8100 3285 4888
+2 5 0 1 0 -1 56 -1 -1 0.000 0 0 -1 0 0 5
+	0 figElem/templateData_IDM_loc.beta2_beta3.eps
+	 5413 4892 8698 4892 8698 8104 5413 8104 5413 4892
+2 5 0 1 0 -1 47 -1 -1 0.000 0 0 -1 0 0 5
+	0 figElem/templateData_IDM_loc.beta0_beta4.eps
+	 1125 6823 4410 6823 4410 10035 1125 10035 1125 6823
+2 5 0 1 0 -1 51 -1 -1 0.000 0 0 -1 0 0 5
+	0 figElem/templateData_IDM_loc.beta1_beta4.eps
+	 3285 6823 6570 6823 6570 10035 3285 10035 3285 6823
+2 5 0 1 0 -1 57 -1 -1 0.000 0 0 -1 0 0 5
+	0 figElem/templateData_IDM_loc.beta3_beta4.eps
+	 7560 6833 10845 6833 10845 10045 7560 10045 7560 6833
+2 5 0 1 0 -1 55 -1 -1 0.000 0 0 -1 0 0 5
+	0 figElem/templateData_IDM_loc.beta2_beta4.eps
+	 5420 6831 8705 6831 8705 10043 5420 10043 5420 6831
+2 5 0 1 0 -1 50 -1 -1 0.000 0 0 -1 0 0 5
+	0 figElem/templateData_IDM_loc.beta0_beta1.eps
+	 1125 945 4410 945 4410 4157 1125 4157 1125 945
