@@ -46,8 +46,8 @@ selectRange(x,xmin,xmax)=((x>=xmin) && (x<=xmax)) ? 1 : NaN
 ##############################################################
 set term post eps enhanced color solid "Helvetica" 16
 
-projName="d8_0900_0930_IDM_s"
-histBaseName="d8_0900_0930_results_IDM_SSE_s"
+projName="d8_IDM_s"
+histBaseName="d8_results_IDM_SSE_s"
 
 ##############################################################
 dataName=sprintf("%s.v0.hist",histBaseName)

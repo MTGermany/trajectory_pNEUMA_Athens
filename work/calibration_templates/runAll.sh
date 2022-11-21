@@ -18,7 +18,8 @@ noLandscape=0
 landscape=1
 
 ###################################################
-usedData="d8_0900_0930"
+#usedData="d8_0900_0930"
+usedData="d8"
 model=$IDM; str_model="IDM"; GOF=$SSE_s; str_GOF="s"
 #model=$IDM; str_model="IDM"; GOF=$SSE_lns; str_GOF="lns"
 #model=$ACC; str_model="ACC"; GOF=$SSE_s; str_GOF="s"
@@ -77,7 +78,7 @@ for f in `ls ${usedData}_*.FCdata`; do num=`grep -c -P $'\t6\t' $f`; if(($num>0)
 
 
 
-echo ""; echo "making histograms"
+echo ""; echo "making parameter lists as input for makeHistograms.sh"
 
 for param in $params "GOF"; do
     echo "manipulating file $resultBasename.$param"
