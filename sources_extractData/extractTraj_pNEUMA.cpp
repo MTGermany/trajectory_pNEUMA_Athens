@@ -831,7 +831,7 @@ vector<Trajectory> calcLogicalTrajs(TuningParameters param,
       }
     }
  
-    if(true){
+    if(false){
       //if(false&&(traj.time.size()>10)){
 	//  if((iveh_s>=35)&&(iveh_s<39)){
       cout<<"\ncalcLogicalTrajs Test traj iveh_s= "<<iveh_s
@@ -2365,7 +2365,8 @@ void identifyWriteLanes(string projName, TuningParameters param,
   for(int icut=0; icut<int(nx/dn-0.5); icut++){
     int ix=int(dn*(icut+0.5)); //!! Therefore the "-0.5" in upper limit icut
     double xc=xminCompl+(ix+0.5)*gridsize;
-    bool debug=(icut<3);
+    //bool debug=(icut<3);
+    bool debug=false;
 
     // ============================================================
     // identifyWriteLanes (1): prepare 1d-cut for finding the peaks
@@ -2487,7 +2488,7 @@ void identifyWriteLanes(string projName, TuningParameters param,
       }
     }
 
-    if(true){//!!!
+    if(false){
       cout<<"icut="<<icut<<" ix="<<ix<<" xc="<<xc
           <<" heatPeaks.size()="<<heatPeaks.size()
 	//<<" heatPeaksConnected.size()="<<heatPeaksConnected.size()
@@ -2661,9 +2662,11 @@ void identifyWriteLanes(string projName, TuningParameters param,
 
   // use interpolated iyd from lanes_cuty[icut][ilane]
 
-  cout<<"\nanalyzeWriteDistBased (3c): "
-      <<"\nbring contiguous lines together by making iline the master index"
-      <<endl<<endl;
+  if(false){
+    cout<<"\nanalyzeWriteDistBased (3c): "
+        <<"\nbring contiguous lines together by making iline the master index"
+        <<endl<<endl;
+  }
   
   // lanesFinal[ilane][4*icut+0] = x (with grid interpolation)
   // lanesFinal[ilane][4*icut+1] = y 
@@ -2745,16 +2748,120 @@ void identifyWriteLanes(string projName, TuningParameters param,
   } // loop over ilane
 
 
+  // correction 1: Sort by increasing y coordinate of first lane datapoint
+  // (second entry [1] of the subvector of lanesFinal)
+  
   sort(lanesFinal.begin(), lanesFinal.end(), compare_by_secondEntry);
   
-  for(int ilane=0; ilane<int(lanesFinal.size()); ilane++){
-    cout <<"identifyWriteLanes: ilane="<<ilane
-	 
-	 <<"\n first y val lanesFinal[ilane][1]="<<lanesFinal[ilane][1]
-	 <<"\n first heading lanesFinal[ilane][3]="<<lanesFinal[ilane][3]
-	 <<endl;
+  // correction 2: Merge lanes with only one or two points missing
+  // that are therefore identified as separate lanes
+
+  double ydist_max=1.;   //[m]
+  double maxMissingPoints=2;
+  double dxCut=dn*gridsize;
+     // xdist_max=dxCut*xdist_maxMissingPoints; gridsize=param.gridsize
+
+  //merge[i]=0: no merging, everything is OK
+  // merge[i]=1: lanesFinal[i] merged with lanesFinal[i+1]
+  // merge[i]=-1: lanesFinal[i+1] merged with lanesFinal[i]
+
+  int nLanes_beforeMerge=int(lanesFinal.size());
+  vector<int> merge(nLanes_beforeMerge-1);
+  for(int il=0; il<nLanes_beforeMerge-1; il++){
+    int nPoints0=int(lanesFinal[il].size())/4;
+    int nPoints1=int(lanesFinal[il+1].size())/4;
+    double xdist_incr=lanesFinal[il+1][0]-lanesFinal[il][4*(nPoints0-1)];
+    double xdist_decr=lanesFinal[il][0]-lanesFinal[il+1][4*(nPoints1-1)];
+
+    double ydist_incr=lanesFinal[il+1][1]-lanesFinal[il][4*(nPoints0-1)+1];
+    double ydist_decr=lanesFinal[il][1]-lanesFinal[il+1][4*(nPoints1-1)+1];
+
+    bool possiblyMergeUp=
+      ((xdist_incr>0)&&(round(xdist_incr/dxCut)<=maxMissingPoints+1));
+    bool possiblyMergeDown=
+      ((xdist_decr>0)&&(round(xdist_decr/dxCut)<=maxMissingPoints+1));
+
+    merge[il]=0;
+    if(possiblyMergeUp&&(fabs(ydist_incr)<ydist_max)){ merge[il]=1;}
+    if(possiblyMergeDown&&(fabs(ydist_decr)<ydist_max)){ merge[il]=-1;}
+
+    if(false){
+      cout<<"possibly merging lanes: il="<<il
+	<<"\n  lanesFinal[il+1][0]="<<lanesFinal[il+1][0]
+	<<" lanesFinal[il][4*(nPoints0-1)]="<<lanesFinal[il][4*(nPoints0-1)]
+
+	<<"\n  xdist_incr="<<xdist_incr
+	<<" xdist_decr="<<xdist_decr
+	<<"\n  possiblyMergeUp="<<possiblyMergeUp
+	<<" possiblyMergeDown="<<possiblyMergeDown
+	<<"\n  (xdist_decr>0)="<<(xdist_decr>0)
+	<<" round(xdist_decr/dxCut)="<<round(xdist_decr/dxCut)
+	<<"\n  merge[il]="<<merge[il]
+	<<endl;
+    }
+  }
+
+  // do the merging
+  int nMerge=0;
+  for(int il0=0; il0<nLanes_beforeMerge-1; il0++){
+    int il=il0-nMerge;
+    int nPoints0=int(lanesFinal[il].size())/4;
+    int nPoints1=int(lanesFinal[il+1].size())/4;
+    double xdist_incr=lanesFinal[il+1][0]-lanesFinal[il][4*(nPoints0-1)];
+    double xdist_decr=lanesFinal[il][0]-lanesFinal[il+1][4*(nPoints1-1)];
+    if(merge[il0]!=0){
+      int dngap=(merge[il0]==1) ? round(xdist_incr/dxCut)
+	: round(xdist_decr/dxCut);
+      int ilDown=il;
+      int ilUp=il+1;
+      if(merge[il0]==1){
+	cout<<"merge original lane "<<il0<<" upwards to "<<il0+1
+	    <<" actual lane "<<il<<" to "<<il+1
+	    <<endl;
+	
+	for(int igap=1; igap<dngap; igap++){
+	  // special case xCut (=first element of a point)
+	  lanesFinal[ilDown].push_back(lanesFinal[ilUp][0]
+				       -dxCut*(dngap-igap));
+	  for(int ipoint=1; ipoint<4; ipoint++){
+	    lanesFinal[ilDown].push_back(lanesFinal[ilUp][ipoint]);
+	  }
+	}
+	
+	for(int i=0; i<int(lanesFinal[ilUp].size()); i++){
+	  lanesFinal[ilDown].push_back(lanesFinal[ilUp][i]);
+	}	
+      }
+      
+      else if(merge[il0]==-1){
+	cout<<"merge original lane "<<il0+1<<" downwards to "<<il0
+	    <<" actual lane "<<il0-nMerge+1<<" to "<<il0-nMerge
+	    <<endl;
+	for(int igap=1; igap<dngap; igap++){
+	  // special case xCut (=first element of a point)
+	  lanesFinal[ilUp].push_back(lanesFinal[ilDown][0]
+				       -dxCut*(dngap-igap));
+	  for(int ipoint=1; ipoint<4; ipoint++){
+	    lanesFinal[ilUp].push_back(lanesFinal[ilDown][ipoint]);
+	  }
+	}
+	for(int i=0; i<int(lanesFinal[ilDown].size()); i++){
+	  lanesFinal[ilUp].push_back(lanesFinal[ilDown][i]);
+	};
+	lanesFinal[ilDown]=lanesFinal[ilUp];  // elementwise copy up to down
+      }
+
+      
+      for(int il=ilUp; il<int(lanesFinal.size())-1; il++){
+	lanesFinal[il]=lanesFinal[il+1];
+      }
+      nMerge++;
+      lanesFinal.resize(nLanes_beforeMerge-nMerge);
+    }
   }
   
+
+ 
   //##########################################################
   // identifyWriteLanes(6): write proj.peaks
   //##########################################################

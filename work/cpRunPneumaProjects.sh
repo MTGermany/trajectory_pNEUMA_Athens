@@ -1,13 +1,8 @@
-
-
 #!/bin/bash
 
-#extraction and calibration template. Only the corresp csv files are needed
+#extraction template. Only the corresp csv files are needed
 
-
-#prepare calibration by simulating in work:
-
-date="20181029"
+date=20181024
 drone="d8"
 workdir="$HOME/trafficSim/data/traj_pNEUMA_Athens/work"
 
@@ -30,8 +25,4 @@ for time in 0800_0830 0830_0900 0900_0930 0930_1000 1000_1030 1030_1100; do
     else
 	echo "file $project.csv does not exist"
     fi
-done
-
-cp ../calibration_saveGnuScripts/* .
-perl -i -p -e 's/20181024/20181029/g' *sh
-
+done 
