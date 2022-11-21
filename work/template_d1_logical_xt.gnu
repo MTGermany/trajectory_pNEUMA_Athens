@@ -73,6 +73,45 @@ plot\
 
 # single trajs at bottom
 
+#############################################
+lanePlot=2
+infile=sprintf("%s.road%i.traj", proj, laneRef)
+epsfile=sprintf("%s_road%i_lane%i_xt_demo_xhift.eps", proj, laneRef, lanePlot)
+#############################################
+
+set out epsfile
+set xrange [tminDetail:tmaxDetail]
+#set yrange [90:110]
+
+print "plotting ",epsfile
+replot
+
+quit
+
+#############################################
+lanePlot=1
+infile=sprintf("%s.road%i.traj", proj, laneRef)
+epsfile=sprintf("%s_road%i_lane%i_xt.eps", proj, laneRef, lanePlot)
+#############################################
+
+set xrange [tmin:tmax]
+set yrange [0:400]
+
+set out epsfile
+print "plotting ",epsfile
+replot
+
+#############################################
+lanePlot=3
+infile=sprintf("%s.road%i.traj", proj, laneRef)
+epsfile=sprintf("%s_road%i_lane%i_xt.eps", proj, laneRef, lanePlot)
+#############################################
+
+set out epsfile
+print "plotting ",epsfile
+replot
+
+
 quit
 
 # single trajs
