@@ -6,7 +6,7 @@ filterData(data,number)=(data==number) ? 1 : NaN
 filterGe(data,number)=(data>=number) ? 1 : NaN
 
 set term post eps enhanced color solid "Helvetica" 12
-proj="template_d8"
+proj="20181024_d3_0900_0930"
 
 
 set param
@@ -69,11 +69,9 @@ print "plotting ",epsfile
 set size ratio -1
 
 
-#set xrange [-450:100]    # for rotated setting d8
-#set yrange [1000:1380]   # for rotated setting d8
+set xrange [-550:-50]    # for rotated setting d8
+set yrange [-150:350]   # for rotated setting d8
 
-set xrange [-500:400]  # general. Must use fixed setting because of multiplot
-set yrange [-400:1000]  # general. Must use fixed setting because of multiplot
 
 set multiplot
 set palette defined ( 0 "white", 5 "green", 30 "blue", \

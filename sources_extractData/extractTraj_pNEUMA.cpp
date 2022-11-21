@@ -2819,7 +2819,9 @@ void identifyWriteLanes(string projName, TuningParameters param,
       int ilDown=il;
       int ilUp=il+1;
       if(merge[il0]==1){
-	cout<<"merge original lane "<<il0<<" upwards to "<<il0+1
+	cout<<"merge original lane "<<il0
+	    <<" at xc="<<lanesFinal[ilUp][0]-dxCut
+	    <<" upwards to "<<il0+1
 	    <<" actual lane "<<il<<" to "<<il+1
 	    <<endl;
 	
@@ -2838,7 +2840,9 @@ void identifyWriteLanes(string projName, TuningParameters param,
       }
       
       else if(merge[il0]==-1){
-	cout<<"merge original lane "<<il0+1<<" downwards to "<<il0
+	cout<<"merge original lane "<<il0+1
+	    <<" at xc="<<lanesFinal[ilDown][0]-dxCut
+	    <<" downwards to "<<il0
 	    <<" actual lane "<<il0-nMerge+1<<" to "<<il0-nMerge
 	    <<endl;
 	for(int igap=1; igap<dngap; igap++){

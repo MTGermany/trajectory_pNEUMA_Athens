@@ -19,7 +19,7 @@ round(x) = x - floor(x) < 0.5 ? floor(x) : ceil(x)
 filterData(data,number)=(data==number) ? 1 : NaN
 filterGe(data,number)=(data>=number) ? 1 : NaN
 filterCarsTrucks(data)=( (data==1)||(data==2)||(data==3)) ? 1 : NaN
-proj="template_d8"
+proj="20181024_d2_0900_0930"
 
 
 lane(y,laneRef)=round(laneRef+y/3.1)
