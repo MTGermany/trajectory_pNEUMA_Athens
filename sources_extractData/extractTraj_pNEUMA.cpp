@@ -1048,13 +1048,14 @@ void extractWriteNeighborhood(TuningParameters param,
 			      const vector<VehicleProperties> vehPropVec,
 			      const vector<Trajectory> logTrajs,
 			      vector<vehicle> & leaderCF_tseries,
-			      bool & wroteCF)
+			      bool & writeCF)
 {
 
   double dxStartIgnored=6.1; // 6.1 drop the first points of the 
                              // log trajectories for various reasons
   double dxEndIgnored=1.0;   // Same for the last part of the subject's traj
 
+  double minDurationCF=10;  // [s]
   //!! vehPropVec[i].width: {moto,car,medVeh,truck,taxi,bus,redTL}
 
   int nveh=logTrajs.size();  // shortcut
@@ -1639,22 +1640,25 @@ void extractWriteNeighborhood(TuningParameters param,
 
   // filter for .FCdata output. Not relevant for other neighbors
   
-  wroteCF=(subjVeh.type!=6); 
+  writeCF=(subjVeh.type!=6); 
   if(noMotoCFtarget){
-    for(int it=it_CFfirst; wroteCF&&(it<it_CFlast); it++){
+    for(int it=it_CFfirst; writeCF&&(it<it_CFlast); it++){
       if(leaderCF_tseries[it].type==0){
-	wroteCF=false;
+	writeCF=false;
       }
     }
   }
+
+  writeCF=writeCF && (int(subjVeh.time.size())>1)
+  && (it_CFlast-it_CFfirst>minDurationCF/(subjVeh.time[1]-subjVeh.time[0]));
 	
-  if(wroteCF){ // no traffic lights as subjets!){
+  if(writeCF){ // no traffic lights as subjets!){
 
     sprintf(fname_out,"%s_road%i_veh%i.FCdata",
 	    projName.c_str(), roadAxisLane, ID_subj);
 
     cout<<"Writing "<<fname_out<<endl;
-
+    //cout<<"it_CFfirst="<<it_CFfirst<<" it_CFlast="<<it_CFlast<<endl;
     ofstream outfile(fname_out);
 
     outfile<<"#This file was produced by calling\n#extractTraj_pNEUMA " 
@@ -3323,13 +3327,13 @@ int main(int argc, char* argv[]) {
     bool onlyCF=false;
     bool noMotoCFtarget=false;
     vector<vehicle> leaderCF_tseries;
-    bool wroteCF;
+    bool writeCF;
 
     // test reverse (lane 4) with e.g., 20181024_d8_0830_0900_veh2244
     
     extractWriteNeighborhood(param, projName, onlyCF, noMotoCFtarget,
 			     ID_subj, roadAxisLane, vehPropVec,
-			     logTrajs, leaderCF_tseries, wroteCF);
+			     logTrajs, leaderCF_tseries, writeCF);
 
     return(0);
  }
@@ -3385,10 +3389,10 @@ int main(int argc, char* argv[]) {
       
       if(subjFilterPassed){
 	vector<vehicle> leaderCF_tseries;
-	bool wroteCF;
+	bool writeCF;
 	extractWriteNeighborhood(param, projName, onlyCF, noMotoCFleader,
 				 ID_subj, roadAxisLane, vehPropVec,
-				 logTrajs, leaderCF_tseries, wroteCF);
+				 logTrajs, leaderCF_tseries, writeCF);
 
 	// analyze leaderCF_tseries
 	bool debug=false;
@@ -3436,7 +3440,7 @@ int main(int argc, char* argv[]) {
 	  }
 
 
-	  if(wroteCF){ // !!!write metainfo of leaders
+	  if(writeCF){ // !!!write metainfo of leaders
 	    cout<<"writing CF data of veh "<<ID_subj<<endl;
 	    if(false){
 	      cout<<"  veh ID="<<ID_subj<<":  leaderIDs={";
