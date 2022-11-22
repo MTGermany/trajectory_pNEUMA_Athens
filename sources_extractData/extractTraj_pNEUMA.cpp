@@ -2345,6 +2345,10 @@ void writeHeatmap(string projName, TuningParameters param, bool excludeVerticalO
 // Identify contiguous lanes
 // from the heatpeaks of heatmap calculated by
 // cutting the heatmap in y and x directions
+// !!! WHATCH OUT! Lane identification very sensitive to rotation
+// Essentially trust only the contiguous main lane(s) and take it
+// for the whole directional road
+// (just filtered in WhatToDo=4 as directional option)
 //###############################################################
 
 

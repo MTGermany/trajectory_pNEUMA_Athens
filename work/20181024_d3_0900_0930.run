@@ -1,5 +1,5 @@
 #!/bin/bash
-project="20181024_d2_0900_0930"
+project="20181024_d3_0900_0930"
 
 extractTraj_pNEUMA $project.csv 2
 extractTraj_pNEUMA $project.csv 3

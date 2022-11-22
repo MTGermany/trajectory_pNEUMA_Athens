@@ -45,8 +45,8 @@ set yrange [0:]
 
 #############################################
 
-laneRef=4
-lanePlot=4
+laneRef=3
+lanePlot=3
 infile=sprintf("%s.road%i.traj", proj, laneRef)
 epsfile=sprintf("%s_road%i_lane%i_xt.eps", proj, laneRef, lanePlot)
 str_lanePlotAll=sprintf("lane=%i, all",lanePlot)
@@ -80,8 +80,8 @@ print "plotting ",epsfile," from ",infile
 replot
 
 #############################################
-laneRef=14
-lanePlot=14
+laneRef=13
+lanePlot=13
 #############################################
 
 infile=sprintf("%s.road%i.traj", proj, laneRef)

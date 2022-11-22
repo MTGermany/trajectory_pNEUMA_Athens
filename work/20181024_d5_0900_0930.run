@@ -1,0 +1,8 @@
+#!/bin/bash
+project="20181024_d5_0900_0930"
+
+extractTraj_pNEUMA $project.csv 2
+extractTraj_pNEUMA $project.csv 3
+extractTraj_pNEUMA $project.csv 4 1 1
+# only one lane is contiguous over nearly the whole length
+extractTraj_pNEUMA $project.csv 6 1

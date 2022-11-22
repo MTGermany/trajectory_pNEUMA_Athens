@@ -1,6 +1,6 @@
 # Input parameters for extractTraj_pNEUMA
 
--1.373   rotAngle          (0.999/0.198 for main horizontal @ d1/d8)
+-1.378   rotAngle          (0.999/0.198 for main horizontal @ d1/d8) 
 #                            for WhatToDo=3,4, otherw irrelevant
 0 	 filterForCars02    {0=false, 1=true}
 1 	 filterForCars3     {0=false, 1=true} set true for lane finding
@@ -21,15 +21,15 @@
 1	 filterForXY34	   {0=false, 1=true}  (lane finding/trajectories)
 1	 filterForXY56	   {0=false, 1=true}  (a little bit more restrictive)
 0	 xmin		   general filter [m] for heatmap (unrotated)
--550	 xminRot34  (-550) gen. filter [m] for heatmap, peakfinding, lane axes
+780	 xminRot34  (-550) gen. filter [m] for heatmap, peakfinding, lane axes
 -540	 xminRot56	   more restrictive to avoid @ CF init/final irregul
 0	 xmax		   
--150	 xmaxRot34  (-150) if too restr in WhatToDo=4, only TL data in .traj
+1300	 xmaxRot34  (-150) if too restr in WhatToDo=4, only TL data in .traj
 -140	 xmaxRot56	   
 0	 ymin		   
-1150	 yminRot34  (1150)		   
+570	 yminRot34  (1150)		   
 0	 ymax		   
-1200	 ymaxRot34  (1200)		   
+750	 ymaxRot34  (1200)		   
 
 # WhatToDo=0,4: "thin out" data
 

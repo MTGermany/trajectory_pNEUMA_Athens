@@ -1,0 +1,12 @@
+#!/bin/bash
+project="20181024_d7_0900_0930"
+
+extractTraj_pNEUMA $project.csv 2
+extractTraj_pNEUMA $project.csv 3
+extractTraj_pNEUMA $project.csv 4 3 0
+extractTraj_pNEUMA $project.csv 4 7 1
+extractTraj_pNEUMA $project.csv 4 13 0
+
+extractTraj_pNEUMA $project.csv 6 3
+extractTraj_pNEUMA $project.csv 6 7
+extractTraj_pNEUMA $project.csv 6 13
