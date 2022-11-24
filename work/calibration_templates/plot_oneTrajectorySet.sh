@@ -53,4 +53,4 @@ for f in `ls ${usedData}_*veh9*FCdata`; do   #more serious test
     cpcalib templateData $proj $str_calib
     $fullProj.run
 done
-
+echo "info: in extended test mode, only corresp *veh9*FCdata are run/plotted"

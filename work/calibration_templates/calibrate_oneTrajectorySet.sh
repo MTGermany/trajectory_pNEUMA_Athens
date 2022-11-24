@@ -1,5 +1,6 @@
 #!/bin/bash
 
+### FUCK d1 statt d8 in GOF
 if (($#!=2)); then
     echo "usage: calibrate_oneTrajectorySet.sh drone time"
     echo "ex: calibrate_oneTrajectorySet.sh d1 0900_0930"
@@ -40,12 +41,15 @@ model=$IDM; str_model="IDM"; GOF=$SSE_s; str_GOF="s"
 #model=$LCM; str_model="LCM"; GOF=$SSE_s; str_GOF="s"
 ###################################################
 
+#FCfilelist=`ls ${usedData}_*.FCdata` #!!!!
+FCfilelist=`ls ${usedData}*_veh9*.FCdata`
 
-for f in `ls ${usedData}_*.FCdata`; do
+for f in $FCfilelist; do
     proj=`basename $f .FCdata`
     echo "proj=$proj"
     calibTraj $GOF $model $proj $noLandscape
 done
+
 
 resultBasename="${usedData}_results_${str_model}_SSE_${str_GOF}"
 params=""
@@ -63,8 +67,9 @@ for param in $params; do
 done
 
 
+
 echo "summarizing results for GOF in $resultBasename.GOF"
-grep "resulting_SSE" *.out > $resultBasename.GOF
+grep "resulting_SSE" ${usedData}_*.out > $resultBasename.GOF
 
 echo "summarizing combined results in $resultBasename"
 
@@ -86,8 +91,7 @@ if (($model==10));then
 	cut -d $'\t' -f 1,2,5,8,11,15 > $resultBasename;
 fi
 
-for f in `ls ${usedData}_*.FCdata`; do num=`grep -c -P $'\t6\t' $f`; if(($num>0)); then echo "$f has $num TL lines"; fi; done
-
+for f in $FCfilelist; do num=`grep -c -P $'\t6\t' $f`; if(($num>0)); then echo "$f has $num TL lines"; fi; done
 
 
 echo ""; echo "making parameter lists as input for makeHistograms.sh"
@@ -102,3 +106,7 @@ done
 
 perl -i -p -e 's/resulting_SSE.*avg_error/avg_error/g' $resultBasename.GOF
 perl -i -p -e 's/m//g' $resultBasename.GOF
+
+echo "hint: summarized all roads of drone $drone at time interval $time "
+echo "in the results files"
+echo "resultBasename= $resultBasename"
