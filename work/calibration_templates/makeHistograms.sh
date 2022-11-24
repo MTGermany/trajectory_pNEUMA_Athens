@@ -1,6 +1,7 @@
 #!/bin/bash
 
 time="0900_0930"
+#for drone in d1; do
 for drone in d1 d2 d3 d4 d6 d7 d8; do
     for proj in ${drone}_${time}_results_IDM_SSE_s; do
         analyzeCalibr "$proj.T" -0.1 0.2 20

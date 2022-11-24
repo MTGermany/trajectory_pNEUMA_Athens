@@ -41,8 +41,8 @@ model=$IDM; str_model="IDM"; GOF=$SSE_s; str_GOF="s"
 #model=$LCM; str_model="LCM"; GOF=$SSE_s; str_GOF="s"
 ###################################################
 
-#FCfilelist=`ls ${usedData}_*.FCdata` #!!!!
-FCfilelist=`ls ${usedData}*_veh9*.FCdata`
+FCfilelist=`ls ${usedData}_*.FCdata`
+#FCfilelist=`ls ${usedData}*_veh9*.FCdata` #!!!
 
 for f in $FCfilelist; do
     proj=`basename $f .FCdata`

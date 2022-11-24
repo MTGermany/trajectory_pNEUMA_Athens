@@ -150,6 +150,7 @@ set label 1 "SSE" at screen 0.89,1.20
 set auto x
 set auto y
 set autoscale fix
+set ytics auto
 
 set xlabel "" offset 0, 0.3;  #unset xtics
 #set ylabel str_beta1 offset 0.7, 0; # because bug at offsets
@@ -202,6 +203,7 @@ print "plotting ".str_beta1beta2
 #set xlabel str_beta1; 
 set xlabel ""; 
 set ylabel "";
+unset ytics
 splot  str_proj.".beta1_beta2" u 1:2:($3) w l ls 99
 
 

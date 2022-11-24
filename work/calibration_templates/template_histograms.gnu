@@ -1,3 +1,15 @@
+#####################################################################
+drone="d3"
+time="0900_0930"
+#####################################################################
+
+# projName can be chosen freely,
+# histBaseName must fit, e.g., "ls *results_IDM_SSE_s*"
+
+projName=sprintf("%s_%s_IDM_s", drone, time)  # can be chosen freely
+histBaseName=sprintf("%s_%s_results_IDM_SSE_s", drone, time)
+#####################################################################
+
 
 
 #####################################################################
@@ -46,14 +58,7 @@ selectRange(x,xmin,xmax)=((x>=xmin) && (x<=xmax)) ? 1 : NaN
 ##############################################################
 set term post eps enhanced color solid "Helvetica" 16
 
-projName="d8_IDM_s"
-histBaseName="d8_results_IDM_SSE_s"
 
-##############################################################
-dataName=sprintf("%s.v0.hist",histBaseName)
-epsName=sprintf("%s_hist_v0.eps",projName)
-set out epsName
-print "plotting ", epsName #" from ",dataName
 ##############################################################
 
 set key top left
@@ -62,6 +67,14 @@ set xlabel "v0 [m/s]"
 set auto x
 set ylabel "\#CF pairs"
 set boxwidth 0.9 relative
+##############################################################
+
+param="v0"
+dataName=sprintf("%s.%s.hist",histBaseName,param)
+epsName=sprintf("%s_hist_%s.eps",projName,param)
+set out epsName
+print "plotting ", epsName," from ",dataName
+
 plot dataName u 1:2 t ""\
      w boxes lc rgb "#aa4477ff" lw 2 fs solid 0.50
 
@@ -73,7 +86,7 @@ param="T"
 dataName=sprintf("%s.%s.hist",histBaseName,param)
 epsName=sprintf("%s_hist_%s.eps",projName,param)
 set out epsName
-print "plotting ", epsName
+print "plotting ", epsName," from ",dataName
 set xlabel sprintf("%s [SI]",param)
 replot
 
@@ -81,7 +94,7 @@ param="s0"
 dataName=sprintf("%s.%s.hist",histBaseName,param)
 epsName=sprintf("%s_hist_%s.eps",projName,param)
 set out epsName
-print "plotting ", epsName
+print "plotting ", epsName," from ",dataName
 set xlabel sprintf("%s [SI]",param)
 replot
 
@@ -89,7 +102,7 @@ param="a"
 dataName=sprintf("%s.%s.hist",histBaseName,param)
 epsName=sprintf("%s_hist_%s.eps",projName,param)
 set out epsName
-print "plotting ", epsName
+print "plotting ", epsName," from ",dataName
 set xlabel sprintf("%s [SI]",param)
 replot
 
@@ -97,7 +110,7 @@ param="b"
 dataName=sprintf("%s.%s.hist",histBaseName,param)
 epsName=sprintf("%s_hist_%s.eps",projName,param)
 set out epsName
-print "plotting ", epsName
+print "plotting ", epsName," from ",dataName
 set xlabel sprintf("%s [SI]",param)
 replot
 
@@ -105,7 +118,7 @@ param="GOF"
 dataName=sprintf("%s.%s.hist",histBaseName,param)
 epsName=sprintf("%s_hist_%s.eps",projName,param)
 set out epsName
-print "plotting ", epsName
+print "plotting ", epsName," from ",dataName
 set xlabel sprintf("%s [SI]",param)
 replot
 
@@ -114,6 +127,6 @@ param="GOF_log"
 dataName=sprintf("%s.%s.hist",histBaseName,param)
 epsName=sprintf("%s_hist_%s.eps",projName,param)
 set out epsName
-print "plotting ", epsName
+print "plotting ", epsName," from ",dataName
 set xlabel sprintf("%s [SI]",param)
 replot

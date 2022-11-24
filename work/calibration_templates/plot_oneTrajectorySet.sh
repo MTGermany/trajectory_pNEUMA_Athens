@@ -45,12 +45,12 @@ model=$IDM;  str_model="IDM";  str_calib="IDM_s"
 
 #for f in "d8_0900_0930_road4_veh848.FCdata"; do   #test
 #for f in "d7_0900_0930_road7_veh1214.FCdata"; do   #test    
-for f in `ls ${usedData}_*veh9*FCdata`; do   #more serious test    
-#for f in `ls ${usedData}_*.FCdata`; do
+#for f in `ls ${usedData}_*veh9*FCdata`; do   #more serious test    
+for f in `ls ${usedData}_*.FCdata`; do
     proj=`basename $f .FCdata`
     fullProj="${proj}_${str_calib}"
     echo "proj=$proj, fullProj=$fullProj"
     cpcalib templateData $proj $str_calib
     $fullProj.run
 done
-echo "info: in extended test mode, only corresp *veh9*FCdata are run/plotted"
+#echo "info: in extended test mode, only corresp *veh9*FCdata are run/plotted"
