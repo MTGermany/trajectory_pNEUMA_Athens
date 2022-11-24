@@ -1,5 +1,21 @@
 #!/bin/bash
 
+if (($#!=2)); then
+    echo "usage: plot_oneTrajectorySet.sh drone time"
+    echo "ex: plot_oneTrajectorySet.sh d1 0900_0930"
+    echo "need to re-calibrate with landscape on"
+    echo "GOF and model fixed variables within"
+    exit -1;
+fi
+###################################################
+
+drone=$1
+time=$2
+usedData="${drone}_${time}"
+
+####################################################
+#!/bin/bash
+
 if(ls 20181024* > tmp 2> tmp); then
     echo "removing prefix 20181024_";
     mmv "20181024_*" "#1";
@@ -18,7 +34,6 @@ noLandscape=0
 landscape=1
 
 ###################################################
-usedData="d1_0900_0930"
 model=$IDM;  str_model="IDM";  str_calib="IDM_s"
 #model=$IDM;  str_model="IDM";  str_calib="IDM_lns"
 #model=$ACC;  str_model="ACC";  str_calib="ACC_s"
@@ -28,8 +43,9 @@ model=$IDM;  str_model="IDM";  str_calib="IDM_s"
 ###################################################
 
 
-for f in "d8_0900_0930_veh848.FCdata"; do   #test
-#for f in "d1_0900_0930_veh952.FCdata"; do   #test
+#for f in "d8_0900_0930_road4_veh848.FCdata"; do   #test
+#for f in "d7_0900_0930_road7_veh1214.FCdata"; do   #test    
+for f in `ls ${usedData}_*veh9*FCdata`; do   #more serious test    
 #for f in `ls ${usedData}_*.FCdata`; do
     proj=`basename $f .FCdata`
     fullProj="${proj}_${str_calib}"

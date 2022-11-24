@@ -1,0 +1,6 @@
+# Traffic lights for the directional road 1 of this drone region
+# fixed-time control => simple
+# x_logical  cycleTime	phaseRedBegin  duration
+120 	     90		66	       30
+275	     90		75	       30
+365	     90		80	       30

@@ -704,6 +704,9 @@ depending on value of filterForXY34 in .param file, also filtered
          - trajectory points filtered to the rectangular region 
            (in the rotated frame)
            defined by .param if param.filterForXY34 is active
+         - even if not active or too large (two parallel road same direction)
+           restricted in y by local parameter maxdist_logy 
+           (max distance from reference axis)
          - virtual trajectories of traffic lights added if the corresponding
            .trafficLights or .trafficLightsReverse file found
          - in case of reverse, the logical frame is rotated by PI
@@ -728,6 +731,7 @@ vector<Trajectory> calcLogicalTrajs(TuningParameters param,
 					   
   vector<Trajectory> trajs_out;
   int min_dataPoints=10;
+  double maxdist_logy=15;
 
   //cout<<"calcLogicalTrajs: road.x.size()="<<road.x.size()<<endl;
 
@@ -788,29 +792,31 @@ vector<Trajectory> calcLogicalTrajs(TuningParameters param,
 	vector<double>logCoords
 	  =logicalCoords(xrot,yrot,road);
 
-	// populate vectors of traj
+	// populate vectors of traj if not too far from road axis
 
-	double heading_log=heading_s-logCoords[2]; // rel to road axis
-	double coshead=cos(heading_log);
-	double sinhead=sin(heading_log);
-	double speed=data[iveh][2+6*it]/3.6;
-	double acc=sqrt(SQR(data[iveh][3+6*it])+SQR(data[iveh][4+6*it]));
-	traj.time.push_back(time);  // component time of traj
-	traj.x.push_back(logCoords[0]);
-	traj.y.push_back(logCoords[1]);
-	traj.heading.push_back(heading_log);
-	traj.vx.push_back(speed*coshead);
-	traj.vy.push_back(speed*sinhead);
-	traj.ax.push_back(acc*coshead);
-	traj.ay.push_back(acc*sinhead);
+	if(fabs(logCoords[1])<maxdist_logy){
+	  double heading_log=heading_s-logCoords[2]; // rel to road axis
+	  double coshead=cos(heading_log);
+	  double sinhead=sin(heading_log);
+	  double speed=data[iveh][2+6*it]/3.6;
+	  double acc=sqrt(SQR(data[iveh][3+6*it])+SQR(data[iveh][4+6*it]));
+	  traj.time.push_back(time);  // component time of traj
+	  traj.x.push_back(logCoords[0]);
+	  traj.y.push_back(logCoords[1]);
+	  traj.heading.push_back(heading_log);
+	  traj.vx.push_back(speed*coshead);
+	  traj.vy.push_back(speed*sinhead);
+	  traj.ax.push_back(acc*coshead);
+	  traj.ay.push_back(acc*sinhead);
 	
-	if(false){
-	  unsigned its=traj.time.size();
-	  cout<<"compare: "
+	  if(false){
+	    unsigned its=traj.time.size();
+	    cout<<"compare: "
 	      <<" alon="<<data[iveh][3+6*it]<<" ax="<<traj.ax[its-1]
 	      <<" alat="<<data[iveh][4+6*it]<<" ay="<<traj.ay[its-1]
 	      <<endl;
-	}
+	  }
+	} // maxdist_logy distance from road axis
 	
       } // filter
 
@@ -3278,10 +3284,7 @@ int main(int argc, char* argv[]) {
      // get traffic-light info
     
     char fnameTL[2048];
-    sprintf(fnameTL,"%s.%s", projName.c_str(), "trafficLights");
-    if(reverseDirection){
-      sprintf(fnameTL,"%s.%s", projName.c_str(), "trafficLightsReverse");
-    }
+    sprintf(fnameTL,"%s.%s%i", projName.c_str(),"trafficLights",roadAxisLane);
    
     
     // do all the following with overwritten roadAngle

@@ -1,10 +1,10 @@
 #!/bin/bash
-project="20181024_d6_0900_0930"
+project="template_d6"
 
 extractTraj_pNEUMA $project.csv 2
 extractTraj_pNEUMA $project.csv 3
 extractTraj_pNEUMA $project.csv 4 5 1
 extractTraj_pNEUMA $project.csv 4 9 0
-# only one lane is contiguous over nearly the whole length
+
 extractTraj_pNEUMA $project.csv 6 5
 extractTraj_pNEUMA $project.csv 6 9

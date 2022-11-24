@@ -1,8 +1,7 @@
 #!/bin/bash
-project="20181024_d4_0900_0930"
+project="template_d4"
 
 extractTraj_pNEUMA $project.csv 2
 extractTraj_pNEUMA $project.csv 3
 extractTraj_pNEUMA $project.csv 4 3 0
-# the smaller road at y=120 m has no distinct lane following
 extractTraj_pNEUMA $project.csv 6 3

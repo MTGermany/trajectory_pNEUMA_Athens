@@ -6,7 +6,7 @@ filterData(data,number)=(data==number) ? 1 : NaN
 filterGe(data,number)=(data>=number) ? 1 : NaN
 
 set term post eps enhanced color solid "Helvetica" 12
-proj="20181024_d7_0900_0930"
+proj="template_d7"
 
 #############################################
 infile=sprintf("%s.peaks",proj)

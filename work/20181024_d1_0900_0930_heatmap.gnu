@@ -43,8 +43,8 @@ set cbrange [0:30]
 set size noratio
 set size 1,1
 
-set xrange [0:400]
-set yrange [-10:4]
+set auto x
+set auto y
 
 set palette defined ( 0 "white", 15 "yellow", 40 "orange", \
       70 "red", 100 "#880000")

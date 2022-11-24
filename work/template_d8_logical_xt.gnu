@@ -19,6 +19,7 @@ round(x) = x - floor(x) < 0.5 ? floor(x) : ceil(x)
 filterData(data,number)=(data==number) ? 1 : NaN
 filterGe(data,number)=(data>=number) ? 1 : NaN
 filterCarsTrucks(data)=( (data==1)||(data==2)||(data==3)) ? 1 : NaN
+
 proj="template_d8"
 
 
@@ -26,34 +27,23 @@ lane(y,laneRef)=round(laneRef+y/3.1)
 
 set param
 set key opaque box
-#set size 0.77,1
-#set size square
-#set size ratio -1
 
 set xlabel "t [s]"
-#set xrange [800:900]
-set xrange [0:]
-#set auto x
+set auto x
 
 
 set ylabel "x_{logical} [m]"
-set yrange [0:]
-#set auto y
+set auto y
 
 
 
 #############################################
-
-laneRef=2   #!! only lanePlot<=2 goes to the right
+laneRef=2 
 lanePlot=2
-vehSelect11=1010  # must be on relevant lane
-vehSelect21=1008  # must be on relevant lane
-vehSelect31=1004  # must be on relevant lane
 infile=sprintf("%s.road%i.traj", proj, laneRef)
 epsfile=sprintf("%s_road%i_lane%i_xt.eps", proj, laneRef, lanePlot)
 str_lanePlotAll=sprintf("lane=%i, all",lanePlot)
 str_lanePlotMoto=sprintf("lane=%i, motorcycles",lanePlot)
-
 #############################################
 
 set out epsfile
@@ -65,18 +55,24 @@ plot\
    t str_lanePlotMoto w l ls 2,\
  infile u \
    (filterData($2,6)*filterData(lane($5,laneRef),lanePlot)*$3):($4)\
-   t sprintf("Red Traffic Lights", vehSelect31) w l ls 12
+   t sprintf("Red Traffic Lights") w l ls 12
 
 
+#############################################
+laneRef=4
+lanePlot=4
+infile=sprintf("%s.road%i.traj", proj, laneRef)
+epsfile=sprintf("%s_road%i_lane%i_xt.eps", proj, laneRef, lanePlot)
+str_lanePlotAll=sprintf("lane=%i, all",lanePlot)
+str_lanePlotMoto=sprintf("lane=%i, motorcycles",lanePlot)
+#############################################
 
-# infile u \
-#   (filterData($1,vehSelect11)*filterData(lane($5,laneRef),lanePlot)*$3):($4)\
-#   t sprintf("Veh %i", vehSelect11) w l ls 1,\
-# infile u \
-#   (filterData($1,vehSelect21)*filterData(lane($5,laneRef),lanePlot)*$3):($4)\
-#   t sprintf("Veh %i", vehSelect21) w l ls 8,\
+set out epsfile
+print "plotting ",epsfile
+replot
 
-#quit
+
+quit
 
 #############################################
 laneRef=2   #!! only lanePlot<=2 goes to the right
@@ -90,6 +86,7 @@ str_lanePlotMoto=sprintf("lane=%i, motorcycles",lanePlot)
 set out epsfile
 print "plotting ",epsfile
 replot
+
 
 #############################################
 laneRef=2   #!! only lanePlot<=2 goes to the right

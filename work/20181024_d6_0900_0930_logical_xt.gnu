@@ -19,38 +19,52 @@ round(x) = x - floor(x) < 0.5 ? floor(x) : ceil(x)
 filterData(data,number)=(data==number) ? 1 : NaN
 filterGe(data,number)=(data>=number) ? 1 : NaN
 filterCarsTrucks(data)=( (data==1)||(data==2)||(data==3)) ? 1 : NaN
-proj="20181024_d5_0900_0930"
+
+proj="20181024_d6_0900_0930"
 
 
 lane(y,laneRef)=round(laneRef+y/3.2)
 
 set param
 set key opaque box
-#set size 0.77,1
-#set size square
-#set size ratio -1
 
 set xlabel "t [s]"
-#set xrange [800:900]
-set xrange [0:]
-#set auto x
+set auto x
 
 
 set ylabel "x_{logical} [m]"
-set yrange [0:]
-#set auto y
+set auto y
 
 
 
 #############################################
-
-laneRef=1
-lanePlot=1
+laneRef=5
+lanePlot=5
 infile=sprintf("%s.road%i.traj", proj, laneRef)
 epsfile=sprintf("%s_road%i_lane%i_xt.eps", proj, laneRef, lanePlot)
 str_lanePlotAll=sprintf("lane=%i, all",lanePlot)
 str_lanePlotMoto=sprintf("lane=%i, motorcycles",lanePlot)
+#############################################
 
+set out epsfile
+print "plotting ",epsfile
+plot\
+ infile u (filterData(lane($5,laneRef),lanePlot)*$3):($4)\
+   t str_lanePlotAll w l ls 1,\
+ infile u (filterData($2,0)*filterData(lane($5,laneRef),lanePlot)*$3):($4)\
+   t str_lanePlotMoto w l ls 2,\
+ infile u \
+   (filterData($2,6)*filterData(lane($5,laneRef),lanePlot)*$3):($4)\
+   t sprintf("Red Traffic Lights") w l ls 12
+
+
+#############################################
+laneRef=9
+lanePlot=9
+infile=sprintf("%s.road%i.traj", proj, laneRef)
+epsfile=sprintf("%s_road%i_lane%i_xt.eps", proj, laneRef, lanePlot)
+str_lanePlotAll=sprintf("lane=%i, all",lanePlot)
+str_lanePlotMoto=sprintf("lane=%i, motorcycles",lanePlot)
 #############################################
 
 set out epsfile

@@ -6,7 +6,8 @@ filterData(data,number)=(data==number) ? 1 : NaN
 filterGe(data,number)=(data>=number) ? 1 : NaN
 
 set term post eps enhanced color solid "Helvetica" 12
-proj="20181029_d8_0900_0930"
+
+proj="20181024_d8_0900_0930"
 
 
 set param
@@ -17,11 +18,7 @@ set key opaque box
 # gnuplot bugs with multiplot but good for general scale findung
 
 set xlabel "x [m]"
-set xrange [-400:0] # for unrotated setting
-
-
 set ylabel "y [m]"
-set yrange [1000:1400]   # for unrotated setting
 
 set surface; unset pm3d; set pm3d map
 
@@ -49,7 +46,7 @@ set size noratio
 set size 1,1
 
 set auto x
-set yrange [1155:1185]
+set auto y
 
 set palette defined ( 0 "white", 15 "yellow", 40 "orange", \
       70 "red", 100 "#880000")
@@ -69,8 +66,8 @@ print "plotting ",epsfile
 set size ratio -1
 
 
-set xrange [-450:100]    # for rotated setting
-set yrange [1000:1380]   # for rotated setting
+set xrange [-450:100]    # for unrotated setting
+set yrange [1000:1380]   # for unrotated setting
 
 set multiplot
 set palette defined ( 0 "white", 5 "green", 30 "blue", \
@@ -84,8 +81,4 @@ unset multiplot
 
 
 
-
-
-
-#quit
 

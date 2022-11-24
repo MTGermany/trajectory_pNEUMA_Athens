@@ -1,3 +1,4 @@
 #!/bin/bash
 
-for f in `ls 20181024_d7_0900_0930*gnu`; do gnuplot $f; done
+project="template_d7"
+for f in `ls ${project}*gnu`; do gnuplot $f; done

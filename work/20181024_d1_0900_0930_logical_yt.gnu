@@ -41,7 +41,7 @@ set yrange [-5:5]
 #set auto y
 
 ####################################################
-# !!! Drone d1 has y shift by about 0.8 m between t1=525 and t2=575
+# !!! Drone d1_0900_0930 has y shift by about 0.8 m between t1=525 and t2=575
 ####################################################
 
 t1=525.

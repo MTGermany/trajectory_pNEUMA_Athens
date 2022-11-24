@@ -21,7 +21,7 @@
 1	 filterForXY34	   {0=false, 1=true}  (lane finding/trajectories)
 1	 filterForXY56	   {0=false, 1=true}  (a little bit more restrictive)
 -50	 xmin		   general filter [m] for heatmap (unrotated)
--550	 xminRot34	   general filter [m] for heatmap (rot), peakfinding,
+-520	 xminRot34	   general filter [m] for heatmap (rot), peakfinding,
 10	 xminRot56	   for CF, leaders, a bit more 
 350	 xmax		   
 -40	 xmaxRot34	   determining lane axes 
@@ -56,7 +56,7 @@
 
 # WhatToDo=4: purely data-based road and lane finding/matching
 
-3.2	 wLane	  	   lanewidth[m]  (2.9 for d1, 3.1 for mainroad d8)
+3.1	 wLane	  	   lanewidth[m]  (2.9 for d1, 3.1 for mainroad d8)
 
 # WhatToDo=5,6: find neighbors and direct CF leaders
 

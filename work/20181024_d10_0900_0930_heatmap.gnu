@@ -33,6 +33,7 @@ toSouth(heading)=(heading<0) ? 1 : NaN;
 set label 1 "Northern directions" at screen 0.59,0.825 front textcolor rgbcolor "#00aa33"
 set label 2 "Southern directions" at screen 0.59,0.860 front textcolor rgbcolor "#ff2200"
 
+
 ################ WhatToDo=3 #################
 infile=sprintf("%s.heatmap3",proj)
 epsfile=sprintf("%s_heatmap3.eps",proj)
@@ -49,14 +50,14 @@ set size noratio
 set size 1,1
 
 set auto x
-set yrange [1155:1185]
+set auto y
 
 set palette defined ( 0 "white", 15 "yellow", 40 "orange", \
       70 "red", 100 "#880000")
-# plot infile u ($1):($2):(zVal($4))  t "" w p palette ps 0.3
+ plot infile u ($1):($2):(zVal($4))  t "" w p palette ps 0.3
 
 
-
+#quit
 
 ################ WhatToDo=2 #################
 infile=sprintf("%s.heatmap2",proj)   # unrotated, with WhatToDo=2

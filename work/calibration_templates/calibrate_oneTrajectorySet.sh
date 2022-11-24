@@ -1,5 +1,19 @@
 #!/bin/bash
 
+if (($#!=2)); then
+    echo "usage: calibrate_oneTrajectorySet.sh drone time"
+    echo "ex: calibrate_oneTrajectorySet.sh d1 0900_0930"
+    echo "GOF and model fixed variables within"
+    exit -1;
+fi
+###################################################
+
+drone=$1
+time=$2
+usedData="${drone}_${time}"
+
+####################################################
+
 if(ls 20181024* > tmp 2> tmp); then
     echo "removing prefix 20181024_";
     mmv "20181024_*" "#1";
@@ -18,8 +32,6 @@ noLandscape=0
 landscape=1
 
 ###################################################
-#usedData="d8_0900_0930"
-usedData="d8"
 model=$IDM; str_model="IDM"; GOF=$SSE_s; str_GOF="s"
 #model=$IDM; str_model="IDM"; GOF=$SSE_lns; str_GOF="lns"
 #model=$ACC; str_model="ACC"; GOF=$SSE_s; str_GOF="s"

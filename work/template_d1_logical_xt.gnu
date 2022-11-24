@@ -25,29 +25,19 @@ filterCarsTrucks(data)=( (data==1)||(data==2)||(data==3)) ? 1 : NaN
 
 set term post eps enhanced color solid "Helvetica" 12
 
-proj="20181024_d1_0900_0930"
+proj="template_d1"
 
 lane(y,laneRef)=round(laneRef+y/2.8)
 
 set param
 set key opaque box
-#set size 0.77,1
-#set size square
-#set size ratio -1
 
-
-tmin=400.
-tmax=700.
-
-tminDetail=500.
-tmaxDetail=600.
 
 set xlabel "t [s]"
-set xrange [tmin:tmax]
+set auto x
 
 set ylabel "x_{logical} [m]"
-set yrange [0:400]
-
+set auto y
 
 
 
@@ -71,20 +61,6 @@ plot\
    (filterData($2,6)*filterData(lane($5,laneRef),lanePlot)*$3):($4)\
    t sprintf("Red Traffic Lights") w l ls 12
 
-# single trajs at bottom
-
-#############################################
-lanePlot=2
-infile=sprintf("%s.road%i.traj", proj, laneRef)
-epsfile=sprintf("%s_road%i_lane%i_xt_demo_xhift.eps", proj, laneRef, lanePlot)
-#############################################
-
-set out epsfile
-set xrange [tminDetail:tmaxDetail]
-#set yrange [90:110]
-
-print "plotting ",epsfile
-replot
 
 quit
 
@@ -93,9 +69,6 @@ lanePlot=1
 infile=sprintf("%s.road%i.traj", proj, laneRef)
 epsfile=sprintf("%s_road%i_lane%i_xt.eps", proj, laneRef, lanePlot)
 #############################################
-
-set xrange [tmin:tmax]
-set yrange [0:400]
 
 set out epsfile
 print "plotting ",epsfile
@@ -111,6 +84,20 @@ set out epsfile
 print "plotting ",epsfile
 replot
 
+#############################################
+lanePlot=2
+tmin=400
+tmax=700
+infile=sprintf("%s.road%i.traj", proj, laneRef)
+epsfile=sprintf("%s_road%i_lane%i_xt_t%i-%i.eps",\
+  proj, laneRef, lanePlot, tmin, tmax)
+#############################################
+
+tmin=400
+tmax=700
+set xrange [tmin:tmax]
+
+replot
 
 quit
 

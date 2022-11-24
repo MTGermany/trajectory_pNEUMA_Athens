@@ -49,14 +49,14 @@ set size noratio
 set size 1,1
 
 set auto x
-set yrange [1155:1185]
+set auto y
 
 set palette defined ( 0 "white", 15 "yellow", 40 "orange", \
       70 "red", 100 "#880000")
-# plot infile u ($1):($2):(zVal($4))  t "" w p palette ps 0.3
+ plot infile u ($1):($2):(zVal($4))  t "" w p palette ps 0.3
 
 
-
+#quit
 
 ################ WhatToDo=2 #################
 infile=sprintf("%s.heatmap2",proj)   # unrotated, with WhatToDo=2
