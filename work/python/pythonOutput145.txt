@@ -1,0 +1,2 @@
+load FCdata file d8_0900_0930_road2_veh145.FCdata
+v0:13.785,T:1.522,s0:0.59,a:1.67,b:5.252
