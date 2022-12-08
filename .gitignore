@@ -21,6 +21,9 @@ README_sourcesInGit
 ## data input files
 *.csv
 
+## output and general (mail) text files
+*.txt
+
 ## generated simulation files by running mic
 *.data
 *.data_s
