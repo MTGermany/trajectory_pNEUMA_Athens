@@ -3003,10 +3003,11 @@ int main(int argc, char* argv[]) {
 	 <<"               4: logical trajectories w/respect to a road,"<<endl
 	 <<"               5: extract local neighborhood of a subject"<<endl
 	 <<"               6: mass-produce .FCdata files for calibration\n"
-	 <<" roadAxisLane: [WhatToDo=4-5] lane of the road to take for log coords\n"
+	 <<"               7: create veh-type dependent lateral densities"<<endl
+	 <<" roadAxisLane: [WhatToDo=4-7] lane of the road to take for log coords\n"
 	 <<" reverse:      [WhatToDo=4] 0: not; 1: reverse direction"<<endl
 	 <<" ID_subj:      [WhatToDo=5] veh ID to get neighbords and leaderCF"<<endl
-
+	 <<" log_x:        [WhatToDo=7] Logical x coord for cross section"<<endl
 	 <<endl
 	 <<"Examples:"<<endl<<endl
 	 <<" extractTraj_pNEUMA 20181024_d8_0900_0930.csv 0"<<endl
@@ -3019,6 +3020,7 @@ int main(int argc, char* argv[]) {
 	 <<" extractTraj_pNEUMA 20181024_d8_0900_0930.csv 5 2 1004"<<endl
 	 <<" extractTraj_pNEUMA 20181024_d8_0900_0930.csv 5 4 2224"<<endl
 	 <<" extractTraj_pNEUMA 20181024_d1_0900_0930.csv 6 2"<<endl
+	 <<" extractTraj_pNEUMA 20181024_d8_0900_0930.csv 7 1 300"<<endl
 	 <<endl
 	 <<endl;
     exit(-1);
@@ -3062,7 +3064,16 @@ int main(int argc, char* argv[]) {
     exit(-1);
   }
 
- if(true){
+  if((WhatToDo==7)&&(argc!=5)){
+    cerr<<"error: You chose WhatToDo=7 but did not give the road axis lane"
+	<<"\nand/or the longitudinal coordinate for the cross section"
+	  <<"\nExample for the second lane from the right as axis:"
+	  <<"\nextractTraj_pNEUMA 20181024_d8_0900_0930.csv 7 1 300"
+	<<endl;
+    exit(-1);
+  }
+
+  if(true){
     cout <<"WhatToDo="<<WhatToDo
 	 <<endl;
   }
@@ -3129,7 +3140,7 @@ int main(int argc, char* argv[]) {
   
    // intput (2): read and parse input csv
 
-  if(WhatToDo<5){ // WhatToDo==5 or 6 only neads logical traj data
+  if(WhatToDo<5){ // WhatToDo==5-7 only neads logical traj data
     
     cout <<"main: data input from "<< fname_in<<endl;
   
@@ -3478,6 +3489,106 @@ int main(int argc, char* argv[]) {
     return(0);
  }
 
+  // #########################################################
+  // 7: get vehicle-dependent density profiles by analyzing the
+  // corresponding .road<lane>.traj file for a given
+  // logical coordinate x_log
+  // #########################################################
+
+  if(WhatToDo==7){
+
+    int roadAxisLane=atoi(argv[3]);
+    double x_center  =atof(argv[4]); // (will use 5 cross sect around
+                                     // to get more data)
+
+    
+    // take trajectories at x_log +/- x_range; 2*x_range=vmax*dt
+    
+    double dt=DT*param.dit;
+    double x_range=30*dt/2;  
+
+    
+    // define the attributes of the cross section
+    // (y is relative to lane axis) and the histogram data container
+
+    const int nx=5;
+    const int dx=20; // take nx crosss section x_center +/- (nx/2)*dx
+    
+    const double y_halfWidth=6;  // lane axis +/- 2 lanes left/right
+    const int ny=100;            // number of histogram points
+    const double dy=2*y_halfWidth/ny;
+    
+    const int nTypes=6; // {0=moto,1=car,2=medveh,3=truck,4=taxi,5=bus}
+    vector<vector<int>> histograms(ny,vector<int>(nTypes,0)); // last arg init to 0
+    
+
+    // get the logical traj data structure from file
+    
+    char infile[2048];
+    sprintf(infile,"%s.road%i.%s", projName.c_str(),
+	    roadAxisLane, "traj");
+    vector<Trajectory> logTrajs=getLogicalTrajsFromFile(infile);
+
+
+    // fill the histograms
+    
+    for(int iveh=0; iveh<int(logTrajs.size()); iveh++){
+      Trajectory traj=logTrajs[iveh];
+      for(int ix=0; ix<nx; ix++){
+	double x_cs=x_center-(nx/2+ix)*dx;
+        bool success=false;
+	
+        for(int it=0; (!success)&&(it<int(traj.time.size())); it++){
+  	  success=( (traj.x[it]>x_cs-x_range)&&(traj.x[it]<=x_cs+x_range));
+ 	  if(success){
+	    int iy=int(ny/2 + round(traj.y[it]/dy));  // round return double
+	    
+	    if((iy>=0)&&(iy<ny)&&(traj.type>=0)&&(traj.type<nTypes)){
+	      histograms[iy][traj.type]++;
+	    }
+	  }
+	}
+      }
+    }
+    
+    
+   
+    // get output in file
+
+    char fname_out[2048];
+    sprintf(fname_out,"%s.road%i_x%i.hist", projName.c_str(), roadAxisLane,
+	    int(round(x_center)));
+	    
+    cout<<"\nWriting "<<fname_out<<endl;
+	    
+    ofstream outfile(fname_out);
+
+    outfile
+      <<"#This file was produced by calling\n#extractTraj_pNEUMA "
+      <<projName
+      <<"  [WhatToDo=]7 [roadAxisLane=]"<<roadAxisLane
+      <<"  [x_center=]"<<x_center
+      <<"\n#Road axis data file: "<<projName<<".lanes";
+    
+    outfile
+      <<"\n#Histograms for x_center="<<x_center
+      <<"\n#y\tmoto\tcar\tmedveh\ttruck\ttaxi\tbus"<<endl;
+    
+    for(int iy=0; iy<ny; iy++){
+      outfile
+	  <<(iy-ny/2)*dy
+	  <<"\t"<<histograms[iy][0]
+	  <<"\t"<<histograms[iy][1]
+	  <<"\t"<<histograms[iy][2]
+	  <<"\t"<<histograms[iy][3]
+	  <<"\t"<<histograms[iy][4]
+	  <<"\t"<<histograms[iy][5]
+	  <<endl;
+    }
+ 
+    
+    return(0);
+  }
 
   
   return(0);
