@@ -62,7 +62,7 @@ set out epsfile
 print "plotting ", epsfile
 set key top left
 
-set xlabel "lateral position y [m]"
+set xlabel "lateral position y to the left [m]"
 set xrange [-6:4]
 set ylabel "\#Vehicles"
 set boxwidth 0.9 relative

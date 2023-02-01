@@ -32,8 +32,8 @@ set key opaque box
 set xlabel "x_{logical} [m]"
 set xrange [0:400]
 
-set ylabel "y_{logical} [m]"
-set yrange [-10:2]
+set ylabel "y_{logical} [m] to the right"
+set yrange [-2:10]
 
 
 #############################################
@@ -46,8 +46,8 @@ set out epsfile
 print "plotting ",epsfile
 
 plot\
- infile u (filterCarsTrucks($2)*$4):($5) t "Cars and trucks" w l ls 1,\
- infile u (filterData($2,0)*$4):($5) t "Motorcycles" w l ls 7
+ infile u (filterCarsTrucks($2)*$4):(-$5) t "Cars and trucks" w l ls 1,\
+ infile u (filterData($2,0)*$4):(-$5) t "Motorcycles" w l ls 7
 
 quit
 
@@ -61,10 +61,10 @@ print "plotting ",epsfile
 
 
 plot\
- infile u (filterCarsTrucks($2)*$4):($5) t "Cars/Trucks" w l ls 1,\
- infile u (filterData($2,0)*$4):($5) t "Motorcycles" w l ls 7,\
- infile u (filterData($2,4)*$4):($5) t "Taxis" w l ls 4,\
- infile u (filterData($2,5)*$4):($5) t "Buses" w l ls 6
+ infile u (filterCarsTrucks($2)*$4):(-$5) t "Cars/Trucks" w l ls 1,\
+ infile u (filterData($2,0)*$4):(-$5) t "Motorcycles" w l ls 7,\
+ infile u (filterData($2,4)*$4):(-$5) t "Taxis" w l ls 4,\
+ infile u (filterData($2,5)*$4):(-$5) t "Buses" w l ls 6
 
 
 quit

@@ -20,7 +20,7 @@ set xlabel "x [m]"
 set xrange [-400:0] # for unrotated setting
 
 
-set ylabel "y [m]"
+set ylabel "y to the left [m]"
 set yrange [1000:1400]   # for unrotated setting
 
 set surface; unset pm3d; set pm3d map

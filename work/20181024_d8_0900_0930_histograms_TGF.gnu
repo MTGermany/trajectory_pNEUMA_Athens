@@ -62,15 +62,15 @@ set out epsfile
 print "plotting ", epsfile
 set key top left
 
-set xlabel "lateral position y [m]"
-set xrange [-6:4]
+set xlabel "lateral position y to the right [m]"
+set xrange [-4:6]
 set ylabel "\#Vehicles"
 set boxwidth 0.9 relative
 plot\
-  infile u 1:2 t "Motorcycles"\
+  infile u (-$1):2 t "Motorcycles"\
      w boxes lc rgb "#aa4477ff" lw 2 fs solid 0.50,\
-  infile u 1:3 t "Cars"\
+  infile u (-$1):3 t "Cars"\
      w boxes lc rgb "#00000000" lw 3 fs solid 0.40,\
-  infile u 1:($4+$5+$6+$7) t "Other vehicles"\
+  infile u (-$1):($4+$5+$6+$7) t "Other vehicles"\
      w boxes lc rgb "#99ff0000" lw 3 fs transparent
 

@@ -21,7 +21,7 @@ set key opaque box
 set xlabel "x [m]"
 set auto x
 
-set ylabel "y [m]"
+set ylabel "y to the left [m]"
 set auto y
 
 set surface; unset pm3d; set pm3d map

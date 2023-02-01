@@ -16,7 +16,7 @@ set key opaque box
 # gnuplot bugs with multiplot but good for general scale findung
 
 set xlabel "x [m]"
-set ylabel "y [m]"
+set ylabel "y to the left [m]"
 
 set surface; unset pm3d; set pm3d map
 

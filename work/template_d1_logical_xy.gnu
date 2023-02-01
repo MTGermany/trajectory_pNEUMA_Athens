@@ -32,7 +32,7 @@ set key opaque box
 set xlabel "x_{logical} [m]"
 set auto x
 
-set ylabel "y_{logical} [m]"
+set ylabel "y_{logical} to the left [m]"
 set auto y
 
 ####################################################

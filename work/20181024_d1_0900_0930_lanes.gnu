@@ -25,7 +25,7 @@ set xlabel "x [m]"
 set xrange [-600:-150]
 set auto x
 
-set ylabel "y [m]"
+set ylabel "y to the left [m]"
 set yrange [1150:1190]
 set auto y
 
