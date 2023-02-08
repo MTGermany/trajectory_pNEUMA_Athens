@@ -10,7 +10,7 @@ set style line 8 lt 1 lw 3 pt 8 ps 1.5 dt 1 lc rgb "#AA00AA"
 set style line 9 lt 1 lw 1 pt 9 ps 1.5 dt 1 lc rgb "#999999" #grau
 set style line 12 lt 1 lw 4 pt 9 ps 1.5 dt 1 lc rgb "#DD0000"
 
-set term post eps enhanced color solid "Helvetica" 12
+set term post eps enhanced color solid "Helvetica" 14
 
 max(x,y)    = (x>y) ? x : y
 min(x,y)    = (x>y) ? y : x
@@ -22,27 +22,27 @@ filterCarsTrucks(data)=( (data==1)||(data==2)||(data==3)) ? 1 : NaN
 
 proj="20181024_d8_0900_0930"
 
-w=3.2
+w=3.2 # as on the real road
 lane(y,laneRef)=round(laneRef+y/(0.85*w)) # excluding motorcycles
 laneMotoLeft(y,laneRef)=round(laneRef+(y-0.5*w)/(0.5*w))
 laneMotoRight(y,laneRef)=round(laneRef+(y+0.5*w)/(0.5*w))
 
 
 set param
-set key opaque box
+set key opaque box bottom right
 
 
-set xlabel "t [s]"
+set xlabel "Time [s]"
 
 
 
-set ylabel "x_{logical} [m]"
-set yrange [0:400]
+set ylabel "Distance x [m]"
+set yrange [0:375]
 
 
 #############################################
 # laneRef=2; lanePlot=2; set xrange [650:900]  # left w/o motorcycles
- laneRef=1; lanePlot=1; set xrange [0:900]   # right w/ motorcycles
+ laneRef=1; lanePlot=1; set xrange [190:350]   # right w/ motorcycles
 # laneRef=3; lanePlot=3; set xrange [650:900] # reverse left w/o motorcycles
 # laneRef=4; lanePlot=4; set xrange [650:900] # reverse right w/ motorcycles
 

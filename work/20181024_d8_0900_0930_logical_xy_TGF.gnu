@@ -25,19 +25,19 @@ filterCarsTrucks(data)=( (data==1)||(data==2)||(data==3)) ? 1 : NaN
 
 proj="20181024_d8_0900_0930"
 
-set term post eps enhanced color solid "Helvetica" 12
+set term post eps enhanced color solid "Helvetica" 14
 set param
 set key opaque box
 
-set xlabel "x_{logical} [m]"
+set xlabel "Distance x [m]"
 set xrange [0:400]
 
-set ylabel "y_{logical} [m] to the right"
-set yrange [-2:10]
+set ylabel "Distance y [m] to the right"
+set yrange [-5:5]
 
 
 #############################################
-laneRef=2
+laneRef=1
 infile=sprintf("%s.road%i.traj", proj, laneRef)
 epsfile=sprintf("%s_road%i_xy_TGF.eps", proj, laneRef)
 #############################################

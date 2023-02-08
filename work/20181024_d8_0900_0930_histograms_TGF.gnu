@@ -44,7 +44,7 @@ filterDataInverse(data,number)=(round(data)==number) ? NaN : 1
 selectRange(x,xmin,xmax)=((x>=xmin) && (x<=xmax)) ? 1 : NaN
 
 ##############################################################
-set term post eps enhanced color solid "Helvetica" 20
+set term post eps enhanced color solid "Helvetica" 14
 #set term png notransparent truecolor medium font "Helvetica,12"
 #set term pngcairo enhanced color notransparent crop font "Helvetica,12" #better
 
@@ -60,9 +60,32 @@ epsfile=sprintf("%s_road%i_x%i_hist_TGF.eps",proj,laneIndex,xcenter)
 
 set out epsfile
 print "plotting ", epsfile
+set key box top right
+
+set xlabel "Distance y to the right [m]"
+set xrange [-4:6]
+set ylabel "\#Vehicles"
+set boxwidth 0.9 relative
+plot\
+  infile u (-$1):2 t "Motorcycles"\
+     w boxes lc rgb "#aa4477ff" lw 2 fs solid 0.50,\
+  infile u (-$1):($3+$4+$5+$6+$7) t "Other vehicles"\
+     w boxes lc rgb "#00000000" lw 3 fs transparent
+
+
+quit
+
+# with separate car and other vehs
+##############################################################
+infile=sprintf("%s.road%i_x%i.hist",proj,laneIndex,xcenter)
+epsfile=sprintf("%s_road%i_x%i_hist_TGF_3classes.eps",proj,laneIndex,xcenter)
+##############################################################
+
+set out epsfile
+print "plotting ", epsfile
 set key top left
 
-set xlabel "lateral position y to the right [m]"
+set xlabel "Distance y to the right [m]"
 set xrange [-4:6]
 set ylabel "\#Vehicles"
 set boxwidth 0.9 relative
