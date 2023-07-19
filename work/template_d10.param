@@ -1,0 +1,71 @@
+# Input parameters for extractTraj_pNEUMA
+
+-1.390    rotAngle          (0.999/0.198 for main horizontal @ d1/d8)
+#                            for WhatToDo=3,4, otherw irrelevant
+0 	 filterForCars02    {0=false, 1=true}
+1 	 filterForCars3     {0=false, 1=true} set true for lane finding
+#                            (always set false for logical traj, WhatToDo=4)
+0 	 filterForOrigin02  {0=false, 1=true} 
+0 	 filterForOrigin3   {0=false, 1=true} (always false for logical trajs)
+1150	 origin_ymin       [m] only use trajectories starting at y>ymin
+1120	 origin_yminRot    if rotated
+0	 origin_ymax       [m] only use trajectories starting at y<=ymax
+0	 origin_ymaxRot    if rotated
+0	 filterForDest02   {0=false, 1=true}
+0	 filterForDest3    {0=false, 1=true} (always false for logical trajs)
+1150	 dest_ymin         [m] Same for trajectories ending
+0	 dest_yminRot     
+0	 dest_ymax
+0	 dest_ymaxRot
+0	 filterForXY02	   {0=false, 1=true}
+1	 filterForXY34	   {0=false, 1=true}  (lane finding/trajectories)
+1	 filterForXY56	   {0=false, 1=true}  (a little bit more restrictive)
+0	 xmin		   general filter [m] for heatmap (unrotated)
+170	 xminRot34  (-550) gen. filter [m] for heatmap, peakfinding, lane axes
+-540	 xminRot56	   more restrictive to avoid @ CF init/final irregul
+0	 xmax		   
+430	 xmaxRot34  (-150) if too restr in WhatToDo=4, only TL data in .traj
+-140	 xmaxRot56	   
+0	 ymin		   
+560	 yminRot34  (1150)		   
+0	 ymax		   
+830	 ymaxRot34  (1200)		   
+
+# WhatToDo=0,4: "thin out" data
+
+5	 dit		   Only every dn'th timestep analyzed/saved
+
+# WhatToDo=1: representation data_s and corresp output
+
+0.2      ds                dist interval [m] for distance-based trajectories
+10	 dsSmooth_heading  smoothing [m] for heading of the dist-trajectories
+
+# WhatToDo=2: headmap and corresp output
+
+0.4      gridsize  	   heatmap gridsize [m]; best, if multiple of ds
+
+# WhatToDo=3: for purely data-based road and lane finding/matching
+  
+10	 distBetweenCuts   distance[m] of y cuts for identifying lanes
+0.8	 dsSmooth_grid     smoothing [m] for finding the y maxima of the heat
+0.06	 maxHeadMismatch   cutoff[rad] for identifying contiguous lanes
+50	 dsSmooth_lane	   smoothing [m] of final lane y coords
+2.0	 wLane_min	   minimum width for robust finding of the y maximum
+0.04	 maxSinHead	   heatmap only for horiz moving vehs for clear lanes
+5	 ncutmin	   only create a contig. lane if >ncutmin heatpeaks
+
+# WhatToDo=4: purely data-based road and lane finding/matching
+
+3.1	 wLane	  	   lanewidth[m]  (2.9 for d1, 3.1 for mainroad d8)
+
+# WhatToDo=5,6: find neighbors and direct CF leaders
+
+70	 dxmax		   max long offset for qualifying as leader/follower
+4.5	 dymax		   max lateral offset for qualifying as neighbor
+25	 TL_dxmin	   consider TL as virtual leader if dx<TL_dxmin
+1.6	 TL_bsafe	   ... or if bkin>TL_bsafe
+3.2	 TL_bcrit	   Just pass the yellow TL if bkin>TL_bcit
+
+# vehicle dimensions in vehicleProperties.param
+
+

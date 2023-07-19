@@ -1,0 +1,25 @@
+Subj: replaced trajectory zip files in the cloud folder
+
+Hi Ankit, 
+
+there were some errors in the last zip files at https://cloudstore.zih.tu-dresden.de/index.php/apps/files/?dir=/Shared/trajectories_pNEUMA&fileid=596516838, so I have replaced them. Please use the new ones. (presently, for drones d1 and d8)
+Among others, I have realized that the traffic lights settings were not the same on diferent days or time periods, so I deactivated them.
+
+At present, I have no time to automatically detect them from the data but what you can do to avoid bias by unobserved red traffic lights is the following:
+
+Do not use any .FCdata file where following conditions are met simultaneously anywhere in the .FCdata file:
+
+(The position of the tlast traffic light can be determined from the trajectory plots *xt.eps): just use the largest position of a stopped car without near leader):
+
+* follower's position < position of the last traffic light
+* gap larger than 40m (or no leader)
+* follower's speed < leader's speed
+* follower's speed < follower's max speed in this trajectory - 2 m/s
+* follower's acceleration < -0.5 m/s^2 (possibly for some minimum time interval of 2 s)
+
+
+
+TODO
+
+(1) inplement this detection
+(2) mark files headers with the info of traffic lights were imputed as above or  from a .trafficLights* file 
