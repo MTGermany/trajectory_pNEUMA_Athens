@@ -42,8 +42,8 @@ set auto y
 
 
 #############################################
-laneRef=2 
-lanePlot=2
+laneRef=1 
+lanePlot=1
 infile=sprintf("%s.road%i.traj", proj, laneRef)
 epsfile=sprintf("%s_road%i_lane%i_xt.eps", proj, laneRef, lanePlot)
 #############################################
@@ -85,7 +85,7 @@ print "plotting ",epsfile
 replot
 
 #############################################
-lanePlot=2
+lanePlot=1
 tmin=400
 tmax=700
 infile=sprintf("%s.road%i.traj", proj, laneRef)

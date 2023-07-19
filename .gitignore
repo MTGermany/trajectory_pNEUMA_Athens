@@ -8,6 +8,8 @@ old
 calibration_2018*
 *toAnkit*
 *bugreport*
+d[1-9]
+d[1-9][0-9]
 
 ## general files
 *SubmitContribution2pNEUMA*
@@ -17,6 +19,7 @@ README_sourcesInGit
 
 ## generated object files
 *.o
+*.zip
 
 ## data input files
 *.csv

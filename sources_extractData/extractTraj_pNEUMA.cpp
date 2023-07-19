@@ -1668,7 +1668,7 @@ void extractWriteNeighborhood(TuningParameters param,
     ofstream outfile(fname_out);
 
     outfile<<"#This file was produced by calling\n#extractTraj_pNEUMA " 
-	 <<projName<<" <WhatToDo=5> "<<ID_subj<<" "<<param.dxmax
+	 <<projName<<" (WhatToDo=) 5 "<<ID_subj<<" (param.dxmax=) "<<param.dxmax
 	 <<"\n#based on logical trajectories for the"
 	 <<"\n#road axis data file "<<projName<<".lanes"
 	 <<" with roadAxisLane "<<roadAxisLane
@@ -2432,7 +2432,10 @@ void identifyWriteLanes(string projName, TuningParameters param,
     // filtered to vertical range param.origin_ymin, param.origin_ymax
     // (inside ic (icut) loop)
     // ============================================================
-  
+
+    //!!! add minimum heat
+    // (in smoothed data, corresponds to approx ten times real minheat)
+    double minheat=0.4; //!!! corresponds to minheatReal approx 15*minheat
     for(int iy=1; iy<ny-1; iy++){
 
     // get three neighbor heats to find maxima and calc there
@@ -2442,10 +2445,12 @@ void identifyWriteLanes(string projName, TuningParameters param,
       double h0=heatmap_1d_smooth[iy];
       double hp=heatmap_1d_smooth[iy+1];
 
-      // peak criterion
+      // peak criterion including minimum heat
       // "+1e-6" because otherwise sometimes double comparison error
     
-      if( (h0>hm+1e-6)&&(h0>hp+1e-6)){ 
+      //if( (h0>hm+1e-6)&&(h0>hp+1e-6) ){ 
+      if( (h0>=minheat)&&(h0>hm+1e-6)&&(h0>hp+1e-6) ){
+	cout<<"h0="<<h0<<endl;
         double diypeak=0.5*(hp-hm)/(2*h0-hp-hm);
 
 	// in addition to basic fractional di shift diypeak,
@@ -2527,7 +2532,7 @@ void identifyWriteLanes(string projName, TuningParameters param,
     // of previous peaks and fill with -1 for "not connected"
 
     else{
-      heatPeaksConnected=vector<double>(lanes_cuty[icut-1].size(),-1);
+       heatPeaksConnected=vector<double>(lanes_cuty[icut-1].size(),-1);
 
       // "pair" the old peaks from the previous cut with the new peaks 
       // in the expected direction
@@ -2541,7 +2546,7 @@ void identifyWriteLanes(string projName, TuningParameters param,
       int ixold=ix-dn;
       vector<bool> peaksPaired(heatPeaks.size(), false); // matched new peaks
       vector<int> ipeakPaired; // test for duplicates
-    
+
       for(unsigned ipeakold=0; ipeakold<lanes_cuty[icut-1].size();
 	  ipeakold++){
 	double iymaxold=lanes_cuty[icut-1][ipeakold];
@@ -2681,7 +2686,7 @@ void identifyWriteLanes(string projName, TuningParameters param,
         <<"\nbring contiguous lines together by making iline the master index"
         <<endl<<endl;
   }
-  
+
   // lanesFinal[ilane][4*icut+0] = x (with grid interpolation)
   // lanesFinal[ilane][4*icut+1] = y 
   // lanesFinal[ilane][4*icut+2] = heat (propto traffic flow)
@@ -2690,7 +2695,6 @@ void identifyWriteLanes(string projName, TuningParameters param,
   
   int ncut=lanes_cuty.size();
   int nLanesMax=lanes_cuty[ncut-1].size(); // because new lanes push_backed
-
   vector<vector<double>> lanesFinal;
   for(int ilane=0; ilane<nLanesMax; ilane++){
     vector<double> oneLane;
@@ -2729,12 +2733,13 @@ void identifyWriteLanes(string projName, TuningParameters param,
     int ncut=oneLane.size()/4;
 
     vector<double>lane_y(ncut);
+
     for(int icut=0; icut<ncut; icut++){
       lane_y[icut]=oneLane[4*icut+1];
       //cout<<"icut="<<icut<<" lane_y[icut]="<<lane_y[icut]<<endl;
     }
     vector<double>lane_y_smooth=stat.smoothTriang(lane_y,dnCutSmooth);
-    if(false){
+    if(true){
       cout<<"\nTest final lane smoothing: dnCutSmooth="<<dnCutSmooth<<endl;
       for(int icut=0; icut<ncut; icut++){
 	
@@ -2780,7 +2785,14 @@ void identifyWriteLanes(string projName, TuningParameters param,
   // merge[i]=-1: lanesFinal[i+1] merged with lanesFinal[i]
 
   int nLanes_beforeMerge=int(lanesFinal.size());
-  vector<int> merge(nLanes_beforeMerge-1);
+if(nLanes_beforeMerge==0){
+  cerr<<"identifyWriteLanes: Warning: too little data;"
+      <<" could not identify any heatmap peaks"<<endl
+      <<" so no lanes"<<endl;
+ }
+
+  vector<int> merge(max(1,nLanes_beforeMerge-1));
+
   for(int il=0; il<nLanes_beforeMerge-1; il++){
     int nPoints0=int(lanesFinal[il].size())/4;
     int nPoints1=int(lanesFinal[il+1].size())/4;
@@ -2965,6 +2977,7 @@ void identifyWriteLanes(string projName, TuningParameters param,
     }
     outfileLanes<<endl;
   }
+cout<<"end identifyWriteLanes(.)"<<endl;
 }//  identifyWriteLanes
 
 
@@ -3378,7 +3391,7 @@ int main(int argc, char* argv[]) {
   if(WhatToDo==6){
 
     bool onlyCF=true;
-    double minDistance=300;
+    double minDistance=250;
     bool noMotoCFleader=true; // follower filter: no motos or taxis
     // long filter param.dxmax, lat filter param.dymax
       

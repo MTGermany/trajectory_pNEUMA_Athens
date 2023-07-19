@@ -3,6 +3,6 @@ project="template_d1"
 
 extractTraj_pNEUMA $project.csv 2
 extractTraj_pNEUMA $project.csv 3
-extractTraj_pNEUMA $project.csv 4 2 0
-extractTraj_pNEUMA $project.csv 6 2
+extractTraj_pNEUMA $project.csv 4 1 0
+extractTraj_pNEUMA $project.csv 6 1
 

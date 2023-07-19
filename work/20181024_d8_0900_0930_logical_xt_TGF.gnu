@@ -1,13 +1,13 @@
 
-set style line 1 lt 1 lw 1 pt 7 ps 1.9 dt 1 lc rgb "#000000" #schwarz, bullet
-set style line 2 lt 1 lw 1 pt 9 ps 1.5 dt 1 lc rgb "#CC0022" #closedUpTriang
-set style line 3 lt 1 lw 1 pt 4 ps 1.2 dt 1 lc rgb "#FF3300" #closedSquare
-set style line 4 lt 1 lw 1 pt 4 ps 1.5 dt 1 lc rgb "#FFAA00" #gelb,
-set style line 5 lt 1 lw 1 pt 5 ps 1.5 dt 1 lc rgb "#00DD22" #gruen,
-set style line 6 lt 1 lw 1 pt 4 ps 1.5 dt 1 lc rgb "#9999FF"
-set style line 7 lt 1 lw 1 pt 4 ps 2.0 dt 1 lc rgb "#4477FF" #blau,
+set style line 1 lt 1 lw 2 pt 7 ps 1.9 dt 1 lc rgb "#000000" #schwarz, bullet
+set style line 2 lt 1 lw 2 pt 9 ps 1.5 dt 1 lc rgb "#CC0022" #closedUpTriang
+set style line 3 lt 1 lw 2 pt 4 ps 1.2 dt 1 lc rgb "#FF3300" #closedSquare
+set style line 4 lt 1 lw 2 pt 4 ps 1.5 dt 1 lc rgb "#FFAA00" #gelb,
+set style line 5 lt 1 lw 2 pt 5 ps 1.5 dt 1 lc rgb "#00DD22" #gruen,
+set style line 6 lt 1 lw 2 pt 4 ps 1.5 dt 1 lc rgb "#9999FF"
+set style line 7 lt 1 lw 2 pt 4 ps 2.0 dt 1 lc rgb "#4477FF" #blau,
 set style line 8 lt 1 lw 3 pt 8 ps 1.5 dt 1 lc rgb "#AA00AA"
-set style line 9 lt 1 lw 1 pt 9 ps 1.5 dt 1 lc rgb "#999999" #grau
+set style line 9 lt 1 lw 2 pt 9 ps 1.5 dt 1 lc rgb "#999999" #grau
 set style line 12 lt 1 lw 4 pt 9 ps 1.5 dt 1 lc rgb "#DD0000"
 
 set term post eps enhanced color solid "Helvetica" 14

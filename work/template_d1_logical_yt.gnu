@@ -49,7 +49,7 @@ t2=575.
 
 
 #############################################
-laneRef=2
+laneRef=1
 infile=sprintf("%s.road%i.traj", proj, laneRef)
 epsfile=sprintf("%s_road%i_yt_demo_yshift.eps", proj, laneRef)
 #############################################
@@ -68,7 +68,7 @@ plot\
 
 
 #############################################
-laneRef=2
+laneRef=1
 infile=sprintf("%s.road%i.traj", proj, laneRef)
 epsfile=sprintf("%s_road%i_yt_demo_yshift_detail.eps", proj, laneRef)
 #############################################
