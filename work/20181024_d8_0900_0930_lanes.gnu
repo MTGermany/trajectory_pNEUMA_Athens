@@ -5,7 +5,10 @@ round(x) = x - floor(x) < 0.5 ? floor(x) : ceil(x)
 filterData(data,number)=(data==number) ? 1 : NaN
 filterGe(data,number)=(data>=number) ? 1 : NaN
 
-set term post eps enhanced color solid "Helvetica" 12
+toNorth3(heading)=(abs(heading)>=0.5*pi) ? 1 : NaN;
+toSouth3(heading)=(abs(heading)<0.5*pi) ? 1 : NaN;
+
+set term post eps enhanced color solid "Helvetica" 16
 proj="20181024_d8_0900_0930"
 
 #############################################
@@ -15,14 +18,17 @@ set out epsfile
 print "plotting ",epsfile
 #############################################
 
+set size 0.90,1
+
 set param
 set key opaque box
 
 set xlabel "x [m]"
 set auto x
 
-set ylabel "y to the left [m]"
-set auto y
+#set ylabel "y to the left [m]"
+set ylabel "y [m]"
+set yrange [1155:1185]
 
 set surface; unset pm3d; set pm3d map
 set auto cb
@@ -50,10 +56,14 @@ print "plotting ",epsfile
 unset label 1
 unset label 2
 
-set palette defined ( 0 "white", 5 "yellow", 20 "orange", \
-      50 "red", 100 "#550000")
-splot infile u ($2):($3):(zVal($5))  t "" w l  palette lw 3
-
+set multiplot
+set palette defined ( 0 "white", 15 "green", 40 "blue", \
+      100 "#000088")
+splot infile u ($2):($3):(toNorth3($4)*zVal($5))  t "" w l  palette lw 3
+set palette defined ( 0 "white", 10 "yellow", 30 "orange", \
+      50 "red", 100 "#880000")
+splot infile u ($2):($3):(toSouth3($4)*zVal($5))  t "" w l  palette lw 3
+unset multiplot
 
 
 

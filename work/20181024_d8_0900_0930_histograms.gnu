@@ -50,7 +50,7 @@ set term post eps enhanced color solid "Helvetica" 20
 
 proj="20181024_d8_0900_0930"
 xcenter=300
-laneIndex=1
+laneIndex=2
 
 ##############################################################
 infile=sprintf("%s.road%i_x%i.hist",proj,laneIndex,xcenter)

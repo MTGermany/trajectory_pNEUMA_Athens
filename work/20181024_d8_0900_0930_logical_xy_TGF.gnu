@@ -30,7 +30,7 @@ set param
 set key opaque box
 
 set xlabel "Distance x [m]"
-set xrange [0:400]
+set xrange [200:300]
 
 set ylabel "Distance y [m] to the right"
 set yrange [-5:5]

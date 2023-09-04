@@ -10,7 +10,7 @@ set style line 8 lt 1 lw 3 pt 8 ps 1.5 dt 1 lc rgb "#AA00AA"
 set style line 9 lt 1 lw 4 pt 9 ps 1.5 dt 1 lc rgb "#999999" #grau
 set style line 12 lt 1 lw 4 pt 9 ps 1.5 dt 1 lc rgb "#DD0000"
 
-set term post eps enhanced color solid "Helvetica" 12
+set term post eps enhanced color solid "Helvetica" 16
 
 max(x,y)    = (x>y) ? x : y
 min(x,y)    = (x>y) ? y : x
@@ -52,11 +52,12 @@ plot\
  infile u (filterData(lane($5,laneRef),lanePlot)*$3):($4)\
    t str_lanePlotAll w l ls 1,\
  infile u (filterData($2,0)*filterData(lane($5,laneRef),lanePlot)*$3):($4)\
-   t str_lanePlotMoto w l ls 2,\
+   t str_lanePlotMoto w l ls 7,\
  infile u \
    (filterData($2,6)*filterData(lane($5,laneRef),lanePlot)*$3):($4)\
    t sprintf("Red Traffic Lights") w l ls 12
 
+#quit
 
 #############################################
 laneRef=4

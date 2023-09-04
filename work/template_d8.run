@@ -7,3 +7,4 @@ extractTraj_pNEUMA $project.csv 4 2 0
 extractTraj_pNEUMA $project.csv 4 4 1
 extractTraj_pNEUMA $project.csv 6 2
 extractTraj_pNEUMA $project.csv 6 4
+extractTraj_pNEUMA $project 7 1 300    # w/o .csv

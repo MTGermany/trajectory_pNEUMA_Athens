@@ -1,8 +1,13 @@
 Subj: replaced trajectory zip files in the cloud folder
 
+ACHTUNG: Teilen - link teilen. Alle anderen Optionen funzen nicht!!!
+
 Hi Ankit, 
 
-there were some errors in the last zip files at https://cloudstore.zih.tu-dresden.de/index.php/apps/files/?dir=/Shared/trajectories_pNEUMA&fileid=596516838, so I have replaced them. Please use the new ones. (presently, for drones d1 and d8)
+https://cloudstore.zih.tu-dresden.de/index.php/s/63AaqWAyYN8B9Qf
+
+there were some errors in the last zip files at
+the above link, so I have replaced them. Please use the new ones. (presently, for drones d1 and d8)
 Among others, I have realized that the traffic lights settings were not the same on diferent days or time periods, so I deactivated them.
 
 At present, I have no time to automatically detect them from the data but what you can do to avoid bias by unobserved red traffic lights is the following:

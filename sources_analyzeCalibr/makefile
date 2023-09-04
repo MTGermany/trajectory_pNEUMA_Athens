@@ -14,6 +14,7 @@ CC=g++ -Wall -O3
  
 #output:
 OUTNAME=analyzeCalibr
+OUTNAME2=analyzeDistributions
 
 #include path for headers
 # !!! ACHTUNG keine Comments hinter Befehle/Defs => obskurer Fehler!!
@@ -25,6 +26,7 @@ BINDIR=~/bin
 #objects/other programs for linking (all own classes to OBJECTS_MAIN)
 
 OBJECTS_MAIN=${OUTNAME}.o
+OBJECTS_MAIN2=${OUTNAME2}.o
 LIBOBJECTS=general.o InOut.o Statistics.o
 
 
@@ -67,8 +69,9 @@ RandomUtils.o: ${LIBDIR}/RandomUtils.cpp
 ${OUTNAME}: $(OBJECTS_MAIN)  $(LIBOBJECTS)
 	${CC} -o ${BINDIR}/${OUTNAME} -O3 $(OBJECTS_MAIN) $(LIBOBJECTS) -lm
 
-makedistr:  $(OBJECTS_DIST) 
-	${CC} -o ${BINDIR}/makedistr -O3 $(OBJECTS_DIST) -lm 
+${OUTNAME2}: $(OBJECTS_MAIN2)  $(LIBOBJECTS)
+	${CC} -o ${BINDIR}/${OUTNAME2} -O3 $(OBJECTS_MAIN2) $(LIBOBJECTS) -lm
+
 
 
 #
