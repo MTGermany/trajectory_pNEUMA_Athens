@@ -1,6 +1,7 @@
 #!/bin/bash
 
-#extraction template. Only the corresp csv files are needed
+# extraction template. Only the corresp csv files are needed!
+# all parameter files, plot files, and run scripts are copied from templates
 if (($#!=2)); then
     echo "calling syntax: extractAllFCdata.sh <csvname> <drone>"
     echo "example: extractAllFCdata.sh 0181024_d1_0900_0930.csv 1"
@@ -26,6 +27,7 @@ if test -d tmpdir; then rm -r tmpdir; fi
 mkdir tmpdir
 cp $templatedir/template_d$drone.* $templatedir/template_d${drone}_* tmpdir
 cd tmpdir
+rm *.eps  # no generated files (template gnu files plot other .traj files)
 mmv "template_d${drone}*" "${project}#1"
 perl -i -p -e "s/template_d${drone}/${project}/g" $project.run $project.plot ${project}_*.gnu
 cd ..
