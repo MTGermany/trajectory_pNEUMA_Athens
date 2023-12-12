@@ -15,7 +15,7 @@ d[1-9][0-9]
 *SubmitContribution2pNEUMA*
 README
 README_sourcesInGit
-
+README_TGF
 
 ## generated object files
 *.o
@@ -34,6 +34,7 @@ README_sourcesInGit
 *.followers
 *.FCdata
 *.traj
+*.fund*
 *.peaks
 *.heatmap*
 *.rowPerVehTime*

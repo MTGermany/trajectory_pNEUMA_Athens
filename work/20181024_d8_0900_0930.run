@@ -7,3 +7,7 @@ extractTraj_pNEUMA $project.csv 4 2 0
 extractTraj_pNEUMA $project.csv 4 4 1
 extractTraj_pNEUMA $project.csv 6 2
 extractTraj_pNEUMA $project.csv 6 4
+extractTraj_pNEUMA $project.csv 7 1 300  #histograms and FD
+extractTraj_pNEUMA $project.csv 7 1 250  #histograms and FD
+extractTraj_pNEUMA $project.csv 7 1 200  #histograms and FD
+extractTraj_pNEUMA $project.csv 7 1 150  #histograms and FD

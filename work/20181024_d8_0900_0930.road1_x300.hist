@@ -1,7 +1,7 @@
 #This file was produced by calling
-#extractTraj_pNEUMA 20181024_d8_0900_0930  [WhatToDo=]7 [roadAxisLane=]1  [x_center=]300
-#Road axis data file: 20181024_d8_0900_0930.lanes
-#Histograms for x_center=300
+#extractTraj_pNEUMA 20181024_d8_0900_0930.csv  [WhatToDo=]7 [roadAxisLane=]1  [x_det=]300
+#using already generated trajectory file 20181024_d8_0900_0930.road1.traj
+#Histograms for x_det=300
 #y	moto	car	medveh	truck	taxi	bus
 -6	0	0	0	0	0	0
 -5.88	0	0	0	0	0	0

@@ -54,6 +54,9 @@ static const double fact_lon=878.5/876.46*cos(lat0*PI/180.);
 static const double rotAngle1=0.999; // right lower part (e.g., drone d1)
 static const double rotAngle2=0; // left upper part (e.g., drone d9)
 
+static const bool CORRECT_NEGATIVE_GAPS=true;
+static const double GAP_MIN=0.2;  // minimum gap for correction.
+                                  // set to same value as in calibTraj.cpp
 
 
 //#####################################################
@@ -161,7 +164,7 @@ struct TuningParameters{
   // WhatToDo=1:  for representation data_s and corresp output
 
   double ds;
-  double dsSmooth_heading; //[m] for data_s and corresp output 
+  double dsSmooth_heading; //[m] for data_s heading (not x_s,y_s)
 
   // WhatToDo=2:  heatmap and corresp output
   
@@ -440,38 +443,6 @@ void parseOneLine(const string line,  int & index, string & str_type,
 }//parseOneLine
 
 
-/*#####################################################
-transforms one original trajectory stored in the structure data 
-(not rotated, only translated to be relative to  lat0, lon0)
-to the logical coordinates of the (directional) road which has the 
-data structure of oneLane, i.e., one top-level element of lanesFinal
-
-@param dit:         only every dit's data line recorded (multiples of 4 ms)
-@param data:        original data from the csv files w/o interpretation
-@param data_s:      distance-based data with heading info
-@param IDvecFiltered:  filtered original IDvecs in data_s (orig: 0,1,2..)
-@param road:        vector containing tuples {axis_x,axis_y,heat,heading} 
-                    for regular x gridpoints (axis must not deviate 
-                    more than, say, 10 degrees to the rotated x axis!)
-@param rotAngle:    approximate angle [rad] of the road axis 
-                    w/respect to traj_orig; must be the same as in data_s
-
-@param xmin,xmax,   filter rectangle in the rotated coords.   
-@param ymin,ymax:   (Must include the road axis)
-
-@action:            trajectory as a vector of structs
-                    each struct has the member variables
-                    {ID, type, t, x, y, vx, vy, ax, ay, along, alat}
-                    vx, vy make use of the headings in data_s 
-                    (rotated @ rotangle, so they are differential headings)
-                    (along, alat directly from the data (rot invariant)
-                     and ax=|a|*cos(differential heading) etc
-
-@output:            file proj.trajLogical
-
-//#####################################################
-*/
-
 
 
 //#####################################################
@@ -691,12 +662,37 @@ Get all logical trajectories of a data set
 based on the lane-axis data of lane index roadAxisLane
 (lane index as stored in the roadData object created with WhatToDo=3,
 file .lanes)
-and filtered for heading near 0 or pi (reverseDirection=0 or 1, respectively)
-The filter is based on the middle point of a given trajectory
-depending on value of filterForXY34 in .param file, also filtered
-(in the rotated system!) horizontally and vertically
 
-@return: Logical trajectories as vector<Trajectory>
+Filters:
+(i)   no duplicates (=> MT 2023-11)
+(ii)  heading near 0 or pi (reverseDirection=0 or 1, respectively)
+      (this filter is based on the middle point of a given trajectory)
+(iii) depending on value of filterForXY34 in .param file, also filtered
+      (in the rotated system!) horizontally and vertically
+It is NOT filtered for vehicle types since all vehicles matter when driving!
+
+@param param.dit:    only every dit's data line recorded (multiples of 4 ms)
+@param param.rotAngle: rotation angle w/respect to geo-coordinates (as data_s)
+@param data:         original data from the csv files w/o interpretation
+@param data_s:       distance-based data with heading info
+@param IDvec:        original vehIDs from csv/data (orig: 1,2,3..)
+@param IDvecFiltered:  filtered original IDvecs in data_s 
+@param typeVec:      original veh type indices from csv/data (orig: 1,2,3..)
+@param road:         vector containing tuples {axis_x,axis_y,heat,heading} 
+                     for regular x gridpoints (axis must not deviate 
+                     more than, say, 10 degrees to the rotated x axis!)
+@param roadAxisLane: Which lane (separated by an empty lane in file .lanes)
+                     to take as reference (logical y=0)
+@param reverseDirection: Whether to select 
+                     headings near zero (false) or pi (true)
+@param fnameTL:      Adds additional virtual TL trajectories if file exists
+
+@return: Logical trajectories as a vector<Trajectory> of struct Trajectory
+         each struct has the member variables
+         {ID, typeIndex, t, x, y,  heading, vx, vy, ax, ay}
+         - trajectories filtered for duplicate in csv files
+           (no linux tool could do it without errors) 
+           in the step calculating data_s, here filtered via IDvecFiltered
          - trajectory filtered according to right direction 
            (determined at the middle of the respective trajectory)
          - trajectory filtered according to a minimum length: 
@@ -719,9 +715,11 @@ Basis: function logicalCoords(xrot,yrot,road)
 */
 
 
+
 vector<Trajectory> calcLogicalTrajs(TuningParameters param,
 				    const vector<vector<double>> data,
 				    const vector<vector<double>> data_s,
+				    const vector<int>IDvec,
 				    const vector<int>IDvecFiltered,
 				    const vector<int> typeVec,
 				    const RoadData road,
@@ -733,7 +731,7 @@ vector<Trajectory> calcLogicalTrajs(TuningParameters param,
   int min_dataPoints=10;
   double maxdist_logy=15;
 
-  //cout<<"calcLogicalTrajs: road.x.size()="<<road.x.size()<<endl;
+  cout<<"in calcLogicalTrajs: road.x.size()="<<road.x.size()<<endl;
 
   double tmin=1e6;
   double tmax=-1e6;
@@ -746,14 +744,36 @@ vector<Trajectory> calcLogicalTrajs(TuningParameters param,
 
   // loop over the already filtered trajectories in traj_s but extraction
   // from the original data
+  // since all veh types must be included, possible filters only with
+  // orig or destination filters but usually disabled, so
+  // IDvecFiltered[]=IDvec[]
+
+  int iveh=0;
   
   for(unsigned iveh_s=0; iveh_s<data_s.size(); iveh_s++){
     Trajectory traj;
     vector<double> vecx;
     vector<double> vecy;
-    int iveh=IDvecFiltered[iveh_s];
 
-    traj.ID=iveh;
+    // search for array index iveh of data[] where
+    // IDvecFiltered[iveh_s]=IDvec[iveh]
+    // (vehIDs are stored separately to save space,
+    // both in data and data_s, the vehIDs are increasing)
+
+    int nveh=int(data.size());
+    while((IDvec[iveh]<IDvecFiltered[iveh_s])
+	  &&(iveh<nveh)) {iveh++;}
+    if(iveh==nveh){iveh--;} // can only happen in error
+    if(IDvec[iveh] != IDvecFiltered[iveh_s]){
+      cerr<<"calcLogicalTrajs: error: could not find right vehID in orig"
+	  <<"\n  iveh="<<iveh<<" iveh_s="<<iveh_s
+	  <<" data file: IDvec[iveh]="<<IDvec[iveh]
+	  <<" IDvecFiltered[iveh_s]="<<IDvecFiltered[iveh_s]<<endl;
+      exit(-1);
+    }
+    
+
+    traj.ID=IDvec[iveh];
     traj.type=typeVec[iveh];
 
     int is=0; // index of data_s[iveh_s] corresponding to time
@@ -866,6 +886,7 @@ vector<Trajectory> calcLogicalTrajs(TuningParameters param,
   //calcLogicalTrajs: add traffic lights as virtual vehicles
   //=========================================================
 
+  cout<<"calcLogicalTrajs: add traffic lights (if any)"<<endl;
   InOut inout;
   if(!inout.fileExists(fnameTL)){
     cerr<<"calcLogicalTrajs: warning: no file "<<fnameTL<<" found"
@@ -982,7 +1003,7 @@ void  writeLogicalTrajs(string projName, TuningParameters param,
   ofstream outfile(fname_out);
 
   outfile<<"#This file was produced by calling\n#extractTraj_pNEUMA "
-  <<projName<<" <WhatToDo=4> <laneRefIndex="<<laneIndex<<">"
+  <<projName<<".csv <WhatToDo=4> <laneRefIndex="<<laneIndex<<">"
    <<" <reverse="<<reverseDirection<<">"
   <<"\n#from the road axis data file "<<projName<<".lanes"
 	 <<" with lane index "<<laneIndex
@@ -1037,7 +1058,8 @@ void  writeLogicalTrajs(string projName, TuningParameters param,
 @param noMotoCFtarget: .FCdata file is onl written if not any motorc as target
 @param ID_subj:        .FCdata and neighborhood for follower with ID_subj
 @param logTrajs:       input: All logical trajectories (no orientation
-                       needed because this already in logTrajs)
+                       needed because logTrajs already are rotated such that
+                       the driving direction is in the positive x axis)
 
 @param leaderCF_tseries: Reference just included to get access from outside
                          the function for debugging it in the top level
@@ -1076,8 +1098,10 @@ void extractWriteNeighborhood(TuningParameters param,
 
 
   
+  //=======================================================
   // extractWriteNeighborhood (1):
   // check if the logical trajectories contain a trajectory for ID_subj
+  //=======================================================
   
   int iveh_subj=0;
   int success=0;
@@ -1100,11 +1124,13 @@ void extractWriteNeighborhood(TuningParameters param,
   }
 
 
+  //=======================================================
   // extractWriteNeighborhood (2):
   // get relative time offsets of the other trajectories
   // with respect to subject (notice: trajs are guaranteed to be longer
   // than a minimum of 10 data points,
   // "if(traj.time.size()>10){...}" so time[1] exists)
+  //=======================================================
 
   vector<int> it_offset;
   double dt=logTrajs[iveh_subj].time[1]-logTrajs[iveh_subj].time[0];
@@ -1119,9 +1145,11 @@ void extractWriteNeighborhood(TuningParameters param,
   }
 
 
+  //=======================================================
   // extractWriteNeighborhood (3):
   // the actual time loop
-  
+  //=======================================================
+ 
   for(unsigned it_subj=0; it_subj<logTrajs[iveh_subj].time.size(); it_subj++){
 
     vector<vehicle> vehicles;
@@ -1142,9 +1170,11 @@ void extractWriteNeighborhood(TuningParameters param,
     
 
     
+    //=======================================================
     // extractWriteNeighborhood (4):
     // get same-time snapshots of all vehs except for the subject
     // (within the it_subj loop)
+    //=======================================================
 
     
       // initialize with no immediate CF leader (CF file needs to be complete)
@@ -1186,14 +1216,19 @@ void extractWriteNeighborhood(TuningParameters param,
 
      
     // sort the vehicles with respect to increasing longitudinal x
-
+    // (!! different from normal ordering "first=Number 1")
+    
     sort(vehicles.begin(), vehicles.end(), compare_by_x);
 
     
+    //=======================================================
     // extractWriteNeighborhood (5) (within the it_subj loop):
     // get relevant leaders and followers
     // filter long distance < param.dxmax (parameter)
     // lateral dist < 1.0*param.wLane (filter not lane based)
+    // leaders and followers sorted according to increasing(!) x
+    // (different as normally)
+    //=======================================================
 
     for(unsigned i=0; i<vehicles.size(); i++){
       double dx=vehicles[i].x-x;
@@ -1202,10 +1237,10 @@ void extractWriteNeighborhood(TuningParameters param,
       if( (abs(dy)<=param.dymax) && (abs(dx)<param.dxmax)
 	  &&(vehicles[i].ID !=ID)){
 	if(dx>0){
-	  leaders.push_back(vehicles[i]);
+	  leaders.push_back(vehicles[i]); // attached to end->ordered incr x
 	}
 	else{
-	  followers.push_back(vehicles[i]);
+	  followers.push_back(vehicles[i]); // attached to end->ordered incr x
 	}
       }
     }
@@ -1329,16 +1364,20 @@ void extractWriteNeighborhood(TuningParameters param,
     }// debug
  
      
+    //=======================================================
     // extractWriteNeighborhood (6) (within the it_subj loop):
-    // select a single leaderCF
+    // select a single leaderCF for .FCdata
+    // from the set of leaders (ordered with increasing x) for the 2d model
     // filter criterion: nearest laterally encroaching leader
+    //=======================================================
 
-    int iLeader=-9999;
+    int iLeader=-9999; // signal no leader if not overwrittyen in loop
     for(int i=0; (iLeader==-9999)&&(i<int(leaders.size())); i++){
       double wEncroach=0.5*(vehPropVec[type].width
 			    +vehPropVec[leaders[i].type].width);
       if(fabs(y-leaders[i].y)<=wEncroach){
-	leaderCF=leaders[i];
+	leaderCF=leaders[i]; // since leaders are ordered with increasing x,
+	                     // first encroaching leader is the right one
 	iLeader=i;
       }
       if(false){
@@ -1351,7 +1390,8 @@ void extractWriteNeighborhood(TuningParameters param,
     //=======================================================
     // extractWriteNeighborhood (7) (within the it_subj loop):
     // special case: yellow/red traffic light further ahead of the leader
-    // who just makes it through the (yellow) light
+    // who just makes it through the (yellow) light but follower
+    // needs to react to the TL before the leader passed
     //=======================================================
 
  
@@ -1405,7 +1445,7 @@ void extractWriteNeighborhood(TuningParameters param,
 	}
       }
     }
-    
+  
   
     //=======================================================
     // extractWriteNeighborhood (8) (within the it_subj loop):
@@ -1489,8 +1529,13 @@ void extractWriteNeighborhood(TuningParameters param,
   
 
 
+
+
   //=======================================================
   // extractWriteNeighborhood (10): Find interesting trajectories
+  // and show them on the console.
+  // Not needed for the normal protocol, can be commented out
+  // In (11), more trajectories are written!
   //=======================================================
 
   if(true){
@@ -1520,6 +1565,8 @@ void extractWriteNeighborhood(TuningParameters param,
       int ID=subjVeh.ID;
       double dx=leaderCF_tseries[it].x-subjVeh.x[it];
       //double dy=leaderCF_tseries[it].y-subjVeh.y[it]; //!!! dy-based alert
+
+      // her gap not corrected! but only used for console output 
       double gap=(typeLeader<0) ? dx  // type=-9999 => no leader, dx=1e6
         : dx-0.5*(vehPropVec[type].length
 			    +vehPropVec[typeLeader].length);
@@ -1575,20 +1622,7 @@ void extractWriteNeighborhood(TuningParameters param,
 	countStop=0;
       }
 	
-      // debug
-      if(ID==2212){
-	cout
-	  <<"ID="<<ID<<" time="<<subjVeh.time[it]
-	  <<" approachStop_tStart="<<approachStop_tStart
-	  <<" countStop="<<countStop
-	  <<" gap="<<gap
-	  <<" v="<<vx
-	  <<" vcrit-vxl="<<approachStop_vlmax-vxl
-	  <<endl;
-
-      }
     }
-
   }
 
 
@@ -1603,7 +1637,7 @@ void extractWriteNeighborhood(TuningParameters param,
   Trajectory subjVeh=logTrajs[iveh_subj];
   int nt=int(subjVeh.time.size()); // shortcut
 
-  // restrict time indices to epsiodes with leaders since some
+  // (11.1) restrict time indices to epsiodes with leaders since some
   // measurement problems at the beginning/and
   // (in between, a missing leader is no problem)
   // Sometimes, traj vehicles stop for a long
@@ -1644,7 +1678,7 @@ void extractWriteNeighborhood(TuningParameters param,
     }
   }
 
-  // filter for .FCdata output. Not relevant for other neighbors
+  // (11.2) filter for .FCdata output. Not relevant for other neighbors
   
   writeCF=(subjVeh.type!=6); 
   if(noMotoCFtarget){
@@ -1657,8 +1691,11 @@ void extractWriteNeighborhood(TuningParameters param,
 
   writeCF=writeCF && (int(subjVeh.time.size())>1)
   && (it_CFlast-it_CFfirst>minDurationCF/(subjVeh.time[1]-subjVeh.time[0]));
-	
-  if(writeCF){ // no traffic lights as subjets!){
+
+  
+  // (11.3) write .FCdata file
+  
+  if(writeCF){ // no traffic lights as subjects!){
 
     sprintf(fname_out,"%s_road%i_veh%i.FCdata",
 	    projName.c_str(), roadAxisLane, ID_subj);
@@ -1668,7 +1705,7 @@ void extractWriteNeighborhood(TuningParameters param,
     ofstream outfile(fname_out);
 
     outfile<<"#This file was produced by calling\n#extractTraj_pNEUMA " 
-	 <<projName<<" (WhatToDo=) 5 "<<ID_subj<<" (param.dxmax=) "<<param.dxmax
+	 <<projName<<".csv (WhatToDo=) 5 "<<ID_subj<<" (param.dxmax=) "<<param.dxmax
 	 <<"\n#based on logical trajectories for the"
 	 <<"\n#road axis data file "<<projName<<".lanes"
 	 <<" with roadAxisLane "<<roadAxisLane
@@ -1680,6 +1717,27 @@ void extractWriteNeighborhood(TuningParameters param,
          <<"\t\tleadID\tleadTyp\tdx[m]\tdy[m]\tgap[m]\tlead_vx\tlead_vy"
  	 <<endl;
     outfile<<setprecision(3)<<fixed;
+
+    // used if CORRECT_NEGATIVE_GAPS;
+    // correction corresponds to changing 0.5*(len_follower+len_leader)
+
+    double dgap_correct=0;
+    if(CORRECT_NEGATIVE_GAPS){
+      double gap_min=1000; // start with unrealistically high value
+      for(int it=it_CFfirst; it<it_CFlast; it++){ // valid range
+        double dx=leaderCF_tseries[it].x-subjVeh.x[it];
+        int type=subjVeh.type;
+        int typeLeader=leaderCF_tseries[it].type;
+        double gap=(typeLeader<0) ? dx  // type=-9999 => no leader, dx=1e6
+          : dx-0.5*(vehPropVec[type].length
+			    +vehPropVec[typeLeader].length);
+        gap_min=min(gap_min,gap);
+      }
+      dgap_correct=max(0.,GAP_MIN-gap_min);
+    }
+    cout<<"extractWriteNeighborhood 11.3: dgap_correct="<<dgap_correct<<endl;
+
+
     for(int it=it_CFfirst; it<it_CFlast; it++){ // valid range
       double dx=leaderCF_tseries[it].x-subjVeh.x[it];
       double dy=leaderCF_tseries[it].y-subjVeh.y[it];
@@ -1688,6 +1746,7 @@ void extractWriteNeighborhood(TuningParameters param,
       double gap=(typeLeader<0) ? dx  // type=-9999 => no leader, dx=1e6
         : dx-0.5*(vehPropVec[type].length
 			    +vehPropVec[typeLeader].length);
+      gap+=dgap_correct; // if CORRECT_NEGATIVE_GAPS and gap_min<GAP_MIN
 
       outfile<<subjVeh.time[it]<<"\t"
 	   <<subjVeh.type<<"\t"
@@ -1719,7 +1778,7 @@ void extractWriteNeighborhood(TuningParameters param,
   ofstream outfile2(fname_out);
 
   outfile2<<"#This file was produced by calling\n#extractTraj_pNEUMA " 
-	 <<projName<<" <WhatToDo=5> "<<ID_subj<<" "<<param.dxmax
+	 <<projName<<".csv <WhatToDo=5> "<<ID_subj<<" "<<param.dxmax
 	 <<"\n#based on logical trajectories for the road axis data file "
 	 <<projName<<".lanes"
 	 <<" with roadAxisLane "<<roadAxisLane
@@ -1758,7 +1817,7 @@ void extractWriteNeighborhood(TuningParameters param,
   ofstream outfile3(fname_out);
 
   outfile3<<"#This file was produced by calling\n#extractTraj_pNEUMA " 
-	 <<projName<<" <WhatToDo=5> "<<ID_subj<<" "<<param.dxmax
+	 <<projName<<".csv <WhatToDo=5> "<<ID_subj<<" "<<param.dxmax
 	 <<"\n#based on logical trajectories for the road axis data file "
 	 <<projName<<".lanes"
 	 <<" with roadAxisLane "<<roadAxisLane
@@ -1875,25 +1934,28 @@ Each vehicle at each position on its own line
                   ends are parallel to the x axis
 @param typeVec:   integer vehicle type  
                   {0=motorc, 1=car, 2=medVehicle, 3=heavyVeh, 4=taxi, 5=bus}
-@param data:      internal data representation. Will be transformed to data_s
+@param data:      internal data representation.
+                  ntraj tuples {lat=y, lon=x, v, accLon, accLat, time} 
+                  Will be transformed to data_s
 
 @internal:        Some finetuning vars at the beginning
 
 @return/action:   populated data structure data_s and filtered IDs 
                   (for later use in other functions)
                   data_s[4*is+0]=time
-                  data_s[4*is+1]=x
-                  data_s[4*is+2]=y
-                  data_s[4*is+3]=heading after rotAngle
+                  data_s[4*is+1]=x (unsmoothed, every sqrt(dx62+dy^2)=ds)
+                  data_s[4*is+2]=y (unsmoothed, every sqrt(dx62+dy^2)=ds)
+                  data_s[4*is+3]=heading after rotating by rotAngle 
+                                 (smoothed by dsSmooth_heading)
 
-@file output:          files <projName>.data_s
-                        <projName>.heatmap
-                        <projName>.peaks
-                        <projName>.lanes
+                  (MT 2023-11): also eliminate duplicate lines in csv files
+                  since no linux tool could do it without errors
+                  !! just look if the first dapa point is identical
 //#####################################################
 */
 
 void transform2DistBased(TuningParameters param,
+			 const vector<int> IDvec,
 			 const vector<int> typeVec,
 			 const vector< vector<double> > data,
 			 vector< int> & IDvecFiltered,
@@ -1906,9 +1968,7 @@ void transform2DistBased(TuningParameters param,
   
   Statistics stat;
 
-  int nVeh=data.size();
-
-  for(int iveh=0; iveh<nVeh; iveh++){
+  for(int iveh=0; iveh<int(data.size()); iveh++){
     double s=0;
     int is=0;
 
@@ -1929,6 +1989,14 @@ void transform2DistBased(TuningParameters param,
 
     // Apply filters
 
+    bool duplicate=false; // (MT 2023-11)
+    if(iveh>0){
+      bool equalLat= (fabs(data[iveh][1+6*0]-data[iveh-1][1+6*0])<1e-6);
+      bool equalLon= (fabs(data[iveh][0+6*0]-data[iveh-1][0+6*0])<1e-6);
+      bool equalTime=(fabs(data[iveh][5+6*0]-data[iveh-1][5+6*0])<1e-6);
+      duplicate=(equalLat && equalLon && equalTime);
+    }
+
     bool filterOriginPassed
       =((!param.filterForOrigin)
 	|| ((yrotold_dt<param.origin_ymax)&&(yrotold_dt>param.origin_ymin)));
@@ -1941,13 +2009,14 @@ void transform2DistBased(TuningParameters param,
       =((!param.filterForCars)
 	|| (typeVec[iveh]==1));
 
-    bool filtersPassed=(filterOriginPassed&&filterDestPassed
-			&&filterTypePassed);
+    bool filtersPassed=( (!duplicate)
+			 && filterOriginPassed && filterDestPassed
+			 && filterTypePassed);
     
     if(filtersPassed){
 
       typeVecFiltered.push_back(typeVec[iveh]);
-      IDvecFiltered.push_back(iveh);
+      IDvecFiltered.push_back(IDvec[iveh]);
     
       vector<double> vehVec; //[time1,x1,y1,heading1,time2, ...]
       vector<double> coshead;
@@ -1972,7 +2041,7 @@ void transform2DistBased(TuningParameters param,
         //if(int(s/param.ds)>is){ // !! 0/0 error if driving back!
 
 
-	  double dsAct=sqrt(SQR(yrot-yrotold_ds)+SQR(xrot-xrotold_ds));
+	double dsAct=sqrt(SQR(yrot-yrotold_ds)+SQR(xrot-xrotold_ds));
 	if(dsAct>param.ds){
 	  //if((dsAct>param.ds) && (yrot>=param.ymin) && (yrot<=param.ymax) ){
   	  double time=data[iveh][5+6*it];
@@ -2057,7 +2126,11 @@ void transform2DistBased(TuningParameters param,
   } // iveh loop for input data
 
   cout<<"transform2DistBased finished: "
-      <<" data.size()="<<data.size()
+      <<"\n  param.rotAngle="<<param.rotAngle
+      <<" param.filterForOrigin="<<param.filterForOrigin
+      <<" param.filterForDest="<<param.filterForDest
+      <<" param.filterForCars="<<param.filterForCars
+      <<"\n  data.size()="<<data.size()
       <<" data_s.size()="<<data_s.size()
       <<" typeVecFiltered.size()="<<typeVecFiltered.size()
       <<endl;
@@ -2077,9 +2150,15 @@ void transform2DistBased(TuningParameters param,
 
   
 
-// #############################################################
-// write distance-based trajectories of data_s to file
-// #############################################################
+/*
+#############################################################
+ write distance-based trajectories of data_s to file
+#############################################################
+
+@file output:          files <projName>.data_s
+with data lines vehID type t xrot, yrot, heading_rot
+*/
+
   
 void writeDistBased(string projName, TuningParameters param,
 		    const vector<int> IDvecFiltered,
@@ -2098,10 +2177,13 @@ void writeDistBased(string projName, TuningParameters param,
   title_oss
     <<"# Trajectories distance based instead of time based."
     <<"\n# This file was produced by calling extractTraj_pNEUMA "
-    <<projName
-    <<" WhatToDo=1>"
+  <<projName<<".csv"
     <<"\n#with the function writeDistBased with parameter param.ds="
     <<param.ds<<" param.dsSmooth_heading="<<param.dsSmooth_heading
+    <<"\n#param.rotAngle="<<param.rotAngle
+    <<" param.filterForOrigin="<<param.filterForOrigin
+    <<" param.filterForDest="<<param.filterForDest
+    <<" param.filterForCars="<<param.filterForCars
     <<"\n#vehID\ttype\tt[s]\txrot[m]\tyrot[m]\theading";
 
   string titleString=title_oss.str();
@@ -2127,11 +2209,11 @@ void writeDistBased(string projName, TuningParameters param,
 
 
 // #############################################################
-// calculate heatmap from data_s (better suited than time-based data
-// particularly for the "spin heatmap" headingMatrix
+// calculate heatmap from data_s (better suited than time-based data)
 // for aplications with horizontal orientation (WhatToDo>=3)
-// set excludeNonHoizontalOD=true but not for general WhatToDo=2
-// because there is generally no horiz. orientation for this application
+// set excludeVerticalOD=true which exludes all traj with
+// |sin(heading)|>param.maxSinHead
+// For general heatmaps with all vehs (WhatToDo=2) set excludeVerticalOD=false
 // #############################################################
 
 void calculateHeatmap(TuningParameters param,
@@ -2317,7 +2399,7 @@ void writeHeatmap(string projName, TuningParameters param, bool excludeVerticalO
 
   outfileHeat
     <<"#This file was produced by calling extractTraj_pNEUMA "
-    <<projName<<" <WhatToDo=2>"
+    <<projName<<".csv <WhatToDo=2>"
     <<"\n#with the function writeHeatmap"
     <<" with parameters"
     <<"\n#param ds="<<param.ds
@@ -2531,7 +2613,7 @@ void identifyWriteLanes(string projName, TuningParameters param,
     // afterwards, initialize length of heatPeaksConnected to number
     // of previous peaks and fill with -1 for "not connected"
 
-    else{
+    else{ // icut>=1
        heatPeaksConnected=vector<double>(lanes_cuty[icut-1].size(),-1);
 
       // "pair" the old peaks from the previous cut with the new peaks 
@@ -2596,7 +2678,7 @@ void identifyWriteLanes(string projName, TuningParameters param,
 	}
       
 	//debug
-	  
+        
 	if(debug){
 	  double iymax_best=heatPeaks[ipeakMatch];
 	  //double tanPlus=tan(headold+param.maxHeadMismatch);
@@ -2630,13 +2712,14 @@ void identifyWriteLanes(string projName, TuningParameters param,
     
  	    
       // ============================================================
-      // identifyWriteLanes (4): Identify contiguous lanes by
-      // the new peaks that found no partner will initiate new lanes
+      // identifyWriteLanes (4): Peaks that found no partner
+      // will initiate new lanes (notice all this is inside the cutting loop)
       // => new elements in the vector heatPeaksConnected
       // resulting in the first elements of heatPeaksConnected possibly -1
-      // and an increased sie by the number of new peaks that found no
+      // and vector size increased by the number of new peaks that found no
       // old partner
-
+      // ============================================================
+    
       if(debug){
         cout<<" heatPeaksConnected.size()="<<heatPeaksConnected.size()
 	    <<" peaksPaired.size()="<<peaksPaired.size()<<endl;
@@ -2674,12 +2757,13 @@ void identifyWriteLanes(string projName, TuningParameters param,
   // NOTE: filtered for a minimum of param.ncutmin icut points only at the end
   // of block 5 ("loop over ilane")
   
-  // ####################################################################
+  // ====================================================================
   // identifyWriteLanes (5)
-  // bring contiguous lines together by making iline the master index
-  // ####################################################################
-
+  // bring contiguous lanes together by making iline the master index
   // use interpolated iyd from lanes_cuty[icut][ilane]
+  // and smooth the lanes in y direction
+  // ====================================================================
+
 
   if(false){
     cout<<"\nanalyzeWriteDistBased (3c): "
@@ -2767,13 +2851,20 @@ void identifyWriteLanes(string projName, TuningParameters param,
   } // loop over ilane
 
 
+  // ===================================================================
+  // identifyWriteLanes (6)
   // correction 1: Sort by increasing y coordinate of first lane datapoint
   // (second entry [1] of the subvector of lanesFinal)
-  
+  // ===================================================================
+
   sort(lanesFinal.begin(), lanesFinal.end(), compare_by_secondEntry);
+
   
+  // ===================================================================
+  // identifyWriteLanes (7)
   // correction 2: Merge lanes with only one or two points missing
   // that are therefore identified as separate lanes
+  // ===================================================================
 
   double ydist_max=1.;   //[m]
   double maxMissingPoints=2;
@@ -2785,11 +2876,11 @@ void identifyWriteLanes(string projName, TuningParameters param,
   // merge[i]=-1: lanesFinal[i+1] merged with lanesFinal[i]
 
   int nLanes_beforeMerge=int(lanesFinal.size());
-if(nLanes_beforeMerge==0){
-  cerr<<"identifyWriteLanes: Warning: too little data;"
-      <<" could not identify any heatmap peaks"<<endl
-      <<" so no lanes"<<endl;
- }
+  if(nLanes_beforeMerge==0){
+    cerr<<"identifyWriteLanes: Warning: too little data;"
+        <<" could not identify any heatmap peaks"<<endl
+        <<" so no lanes"<<endl;
+   }
 
   vector<int> merge(max(1,nLanes_beforeMerge-1));
 
@@ -2903,7 +2994,7 @@ if(nLanes_beforeMerge==0){
 
   outfilePeaks<<"#This file was produced by calling identifyWritePeaks"
 	      <<"\n#from the program extract_pNEUMA "
-	      <<projName<<" <WhatToDo=3>"
+	      <<projName<<".csv <WhatToDo=3>"
 	      <<"\n#Pparameters:"
 	      <<"\n#param.ds="<<param.ds
 	      <<"\n#param.gridsize="<<gridsize
@@ -2953,7 +3044,7 @@ if(nLanes_beforeMerge==0){
 
   outfileLanes<<"#This file was produced by calling identifyWriteLanes"
 	      <<"\n#from the program extract_pNEUMA "
-	      <<projName<<" <WhatToDo=3>"
+	      <<projName<<".csv <WhatToDo=3>"
 	      <<"\n#Pparameters:"
 	      <<"\n#param.ds="<<param.ds
 	      <<"\n#param.gridsize="<<gridsize
@@ -3151,7 +3242,9 @@ int main(int argc, char* argv[]) {
 
   
   
-   // intput (2): read and parse input csv
+  // intput (2): read and parse input csv to data[]
+  // duplicates NOT filtered at this stage,
+  // only later for WhatToDo=1 or higher
 
   if(WhatToDo<5){ // WhatToDo==5-7 only neads logical traj data
     
@@ -3174,6 +3267,7 @@ int main(int argc, char* argv[]) {
       string oneType;
       vector<double>oneTrajectory;
       parseOneLine(line, oneID, oneType, oneTrajectory);
+      
       IDvec.push_back(oneID);
       str_typeVec.push_back(oneType);
       data.push_back(oneTrajectory);
@@ -3211,14 +3305,14 @@ int main(int argc, char* argv[]) {
     cout <<"main: data input completed: nVeh="<<nVeh
          <<" data.size()="<<data.size()
          <<endl;
-  }// WhatToDo<5
+  }// main; define data vector of vectors for WhatToDo<5
 
 
   
   // #########################################################
   // WhatToDo=0: Alternative file output separate rows for each veh and time
   // no other data manipulation as thinning out by saving only every
-  // dit'th dtime step
+  // dit'th dtime step; no new internal structure defined
   // #########################################################
 
   if(WhatToDo==0){
@@ -3234,7 +3328,7 @@ int main(int argc, char* argv[]) {
   // #########################################################
 
   if(WhatToDo==1){
-    transform2DistBased(param, typeVec,
+    transform2DistBased(param, IDvec, typeVec,
 			data, IDvecFiltered, typeVecFiltered,
 			data_s);
     
@@ -3249,7 +3343,7 @@ int main(int argc, char* argv[]) {
   if(WhatToDo==2){
     double xminCompl, yminCompl;
     
-    transform2DistBased(param, typeVec,
+    transform2DistBased(param, IDvec, typeVec,
 			data, IDvecFiltered, typeVecFiltered,
 			data_s);
 
@@ -3270,9 +3364,10 @@ int main(int argc, char* argv[]) {
   if(WhatToDo==3){
     double xminCompl, yminCompl;
 
-    transform2DistBased(param, typeVec,
+    transform2DistBased(param, IDvec, typeVec,
 			data, IDvecFiltered, typeVecFiltered,
 			data_s);
+    writeDistBased(projName, param, IDvecFiltered, typeVecFiltered, data_s);
     
     bool excludeVerticalOD=true; // only horizontal orientations sensible
     calculateHeatmap(param, data_s, excludeVerticalOD,
@@ -3313,13 +3408,13 @@ int main(int argc, char* argv[]) {
     
     // do all the following with overwritten roadAngle
 
-    transform2DistBased(param, typeVec,
+    transform2DistBased(param, IDvec, typeVec,
 			data, IDvecFiltered, typeVecFiltered,
 			data_s);
 
     
     vector<Trajectory> logTrajs=
-      calcLogicalTrajs(param, data, data_s,
+      calcLogicalTrajs(param, data, data_s,IDvec, 
 		       IDvecFiltered, typeVec,
 		       roadAxis, roadAxisLane, reverseDirection, fnameTL);
 
@@ -3503,18 +3598,23 @@ int main(int argc, char* argv[]) {
  }
 
   // #########################################################
-  // 7: get vehicle-dependent density profiles by analyzing the
+  // 7: get vehicle-dependent density profiles
+  // and flow-density data by analyzing the
   // corresponding .road<lane>.traj file for a given
-  // logical coordinate x_log
+  // logical coordinate x_det
+  // generate flow-density data aggregation time etc
+  // as in that generated by mixedTraffic stationaryDetector.js
+  
+
   // #########################################################
 
   if(WhatToDo==7){
 
     int roadAxisLane=atoi(argv[3]);
-    double x_center  =atof(argv[4]); // (will use 5 cross sect around
-                                     // to get more data)
+    double x_det  =atof(argv[4]); // (cross section. Will use 5 cross
+                                     // sect around to get more data)
 
-    
+   
     // take trajectories at x_log +/- x_range; 2*x_range=vmax*dt
     
     double dt=DT*param.dit;
@@ -3525,7 +3625,7 @@ int main(int argc, char* argv[]) {
     // (y is relative to lane axis) and the histogram data container
 
     const int nx=5;
-    const int dx=20; // take nx crosss section x_center +/- (nx/2)*dx
+    const int dx=20; // take nx crosss section x_det +/- (nx/2)*dx
     
     const double y_halfWidth=6;  // lane axis +/- 2 lanes left/right
     const int ny=100;            // number of histogram points
@@ -3534,7 +3634,7 @@ int main(int argc, char* argv[]) {
     const int nTypes=6; // {0=moto,1=car,2=medveh,3=truck,4=taxi,5=bus}
     vector<vector<int>> histograms(ny,vector<int>(nTypes,0)); // last arg init to 0
     
-
+    
     // get the logical traj data structure from file
     
     char infile[2048];
@@ -3542,13 +3642,44 @@ int main(int argc, char* argv[]) {
 	    roadAxisLane, "traj");
     vector<Trajectory> logTrajs=getLogicalTrajsFromFile(infile);
 
+    // flow-density data: get minimum and maximum time
+    
+    double tmin=1e6;
+    double tmax=-1e6;
+    for(int iveh=0; iveh<int(logTrajs.size()); iveh++){
+      //for(int it=0; it<int(logTrajs[iveh].time.size()); it++){
+      int nt=int(logTrajs[iveh].time.size());
+      tmin=min(logTrajs[iveh].time[0],tmin);
+      tmax=max(logTrajs[iveh].time[nt-1],tmax);
+    }
 
-    // fill the histograms
+    // flow-density data: init data containers
+
+    double dtAggr=10;
+    double dxAggr=10; //for Edie
+    int nAggr=int((tmax-tmin)/dtAggr+1);
+    vector<int> nPassed(nAggr,0); 
+    vector<double> speedsum(nAggr,0);
+    vector<double> speed(nAggr,0); // km/h
+    vector<double> flow(nAggr,0);  // veh/h
+
+    vector<double> xtot (nAggr,0); //for Edie
+    vector<double> ttot (nAggr,0);
+    vector<double> densEdie (nAggr,0); //for Edie
+    vector<double> flowEdie (nAggr,0);
+
+    cout<<"tmin="<<tmin<<" tmax="<<tmax<<" nAggr="<<nAggr<<endl;
+    
+    // get the histograms and flow-density data from virtual detector
     
     for(int iveh=0; iveh<int(logTrajs.size()); iveh++){
       Trajectory traj=logTrajs[iveh];
+
+
+      // histograms
+      
       for(int ix=0; ix<nx; ix++){
-	double x_cs=x_center-(nx/2+ix)*dx;
+	double x_cs=x_det-(nx/2+ix)*dx;
         bool success=false;
 	
         for(int it=0; (!success)&&(it<int(traj.time.size())); it++){
@@ -3562,29 +3693,65 @@ int main(int argc, char* argv[]) {
 	  }
 	}
       }
-    }
+
+      // get sums of flow-density data
+      
+      bool success=false;
+      for(int it=0; (!success)&&(it<int(traj.time.size())); it++){
+	success=((traj.x[0]<x_det)&&(traj.x[it]>=x_det));
+	if(success){
+	  int iAggr=int((traj.time[it]-tmin)/dtAggr);
+	  nPassed[iAggr]+=1;
+	  speedsum[iAggr]+=3.6*traj.vx[it];
+	}
+      }
+
+      // get Edie's sums
+      
+      success=false;
+      for(int it=1; (!success)&&(it<int(traj.time.size())); it++){
+	success=(traj.x[it]>=x_det+0.5*dxAggr);
+	if((traj.x[it]>=x_det-0.5*dxAggr)&&(traj.x[it]<x_det+0.5*dxAggr)){
+	  int iAggr=int((traj.time[it]-tmin)/dtAggr);
+	  xtot[iAggr]+=traj.x[it]-traj.x[it-1];
+	  ttot[iAggr]+=traj.time[it]-traj.time[it-1];
+	}
+      }
+      
+     
+    } // over trajectories
+
+
+    // calculate flow density and Edies' estimators  from the sums
     
+    for(int iAggr=0; iAggr<nAggr; iAggr++){
+      flow[iAggr]=3600*nPassed[iAggr]/dtAggr;
+      speed[iAggr]=(nPassed[iAggr]>0) ? speedsum[iAggr]/nPassed[iAggr] : 0;
+      densEdie[iAggr]=ttot[iAggr]/(dxAggr*dtAggr)*1000;
+      flowEdie[iAggr]=xtot[iAggr]/(dxAggr*dtAggr)*3600;
+    }
+
     
    
-    // get output in file
-
+    // file output for histograms
+    
     char fname_out[2048];
     sprintf(fname_out,"%s.road%i_x%i.hist", projName.c_str(), roadAxisLane,
-	    int(round(x_center)));
+	    int(round(x_det)));
 	    
-    cout<<"\nWriting "<<fname_out<<endl;
+    cout<<"\nWriting to "<<fname_out<<endl;
 	    
     ofstream outfile(fname_out);
 
     outfile
       <<"#This file was produced by calling\n#extractTraj_pNEUMA "
-      <<projName
+      <<projName<<".csv"
       <<"  [WhatToDo=]7 [roadAxisLane=]"<<roadAxisLane
-      <<"  [x_center=]"<<x_center
-      <<"\n#Road axis data file: "<<projName<<".lanes";
+      <<"  [x_det=]"<<x_det
+      <<"\n#using already generated trajectory file "<<infile;
     
     outfile
-      <<"\n#Histograms for x_center="<<x_center
+      <<"\n#Histograms for x_det="<<x_det
       <<"\n#y\tmoto\tcar\tmedveh\ttruck\ttaxi\tbus"<<endl;
     
     for(int iy=0; iy<ny; iy++){
@@ -3598,8 +3765,38 @@ int main(int argc, char* argv[]) {
 	  <<"\t"<<histograms[iy][5]
 	  <<endl;
     }
- 
+
     
+    // file output for flow-density data
+    
+    sprintf(fname_out,"%s.road%i_x%i.fund", projName.c_str(), roadAxisLane,
+	    int(round(x_det)));
+	    
+    cout<<"\nWriting to "<<fname_out<<endl;
+
+    // changing file names for ofstream not allowed 
+    ofstream outfile2(fname_out); 
+
+    outfile2
+      <<"#This file was produced by calling\n#extractTraj_pNEUMA "
+      <<projName<<".csv"
+      <<"  [WhatToDo=]7 [roadAxisLane=]"<<roadAxisLane
+      <<"  [x_det=]"<<x_det
+      <<"\n#using already generated trajectory file "<<infile;
+    
+    outfile2
+      <<"\n#Flow-density data for x_det="<<x_det
+      <<"\n#time[s]\tQ[1/h]\tV[km/h]\trho_Edie\tQ_Edie"<<endl;
+    for(int iAggr=0; iAggr<nAggr; iAggr++){
+      outfile2
+	<<tmin+(iAggr+1)*dtAggr
+	  <<"\t\t"<<flow[iAggr]
+	  <<"\t"<<speed[iAggr]
+	  <<"\t"<<densEdie[iAggr]
+	  <<"\t"<<flowEdie[iAggr]
+	  <<endl;
+    }
+     
     return(0);
   }
 
