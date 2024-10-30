@@ -1,0 +1,31 @@
+Signal timings are not contained in the pNEUMA dataset although they are crucial for using the data. Fortunately, it can be observed by the vehicle movements that a fixed-cycle of 90 s (major arteries) or 45 s (smaller streets) is active and that the relative phasing is also essentially fixed. This means, for each lane and each intersection, following information is sufficient:
+
+* position of the stopping line x_logical (the same coordinates as in the corresponding .traj file)
+
+* cycleTime (45 or 90 seconds)
+
+* phaseRedBegin (0 to cycleTime, e.g., phaseRedBegin=6 says traffic light turns red at 6 s, 96 s, ...
+
+* duration (of the red phase)
+
+We emphasize that no yellow phase is assumed because it is unobservable. In fact,  the switching probably occurs at some time during the unknown yellow phase.
+
+In order to find the parameters position, phaseRedBegin and duration for each traffic light, I did not do a formal calibration but just visually fitted the red times such that the sum of the false negatives  (vehicles, particularly motorcycles, drive over the red light) and the false positives (vehicles stop although the road is free and the traffic light is not red) are minimized. Of course, those red crossings or green stops can also be due to an adaptive signal phases instead of a reckless driving behaviour. Unfortunately, adaptive phasing algorithms and reckless driving cannot be separated by looking just at the vehicle trajectories, so a fixed-time control is assumed.
+
+
+Example (in the work/ directory):
+
+For lane 4 of the arterial observed by Drone 8 (lanes 0-2 were in one direction, lanes 3-5 in the other, lane 4 is the middle of the greenish-blue region of the nearly horizontal big road in 20181024_d8_0900_0930_heatmap2.png), I identified four traffic lights whose operation details can be summarized by
+
+# Traffic lights for the directional road 4 of this drone region
+# fixed-time control => simple
+# x_logical  cycleTime    phaseRedBegin  duration
+20           90        77           24
+172         90        10           30
+328         90          7           49
+386         90        20           45
+
+which is stored in 20181024_d8_0900_0930.trafficLights4. When creating logical trajectories out of the raw pNeuma data (here, by the command extractTraj_pNEUMA $project.csv 4 4 1), the phases of red traffic lights are added as temporary virtual trajectories of stopped vehicles (Fig. 20181024_d8_0900_0930_road4_lane4_xt.png)
+
+
+
