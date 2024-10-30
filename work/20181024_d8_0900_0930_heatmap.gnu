@@ -22,8 +22,10 @@ set ylabel "y [m]"
 
 set surface; unset pm3d; set pm3d map
 
+set cbrange [0:250]  
 
-zVal(z)=(z>0.1) ? z : NaN;
+dx=0.4
+zVal(z)=(z>0.1) ? z/dx**2 : NaN;
 toNorth2(heading)=(heading>=0) ? 1 : NaN;
 toSouth2(heading)=(heading<0) ? 1 : NaN;
 toNorth3(heading)=(abs(heading)>=0.5*pi) ? 1 : NaN;
@@ -37,17 +39,20 @@ set out epsfile
 print "plotting ",epsfile
 #############################################
 
-set cbrange [0:50]  
 
 # replot geht nicht mit multiplot!
 # bei WhatToDo=3 verwende ich aber anyway nur die toSouth-Schattierung
 
-set term post eps enhanced color solid "Helvetica" 16
-set label 1 "Northern directions" at screen 0.59,0.815 front textcolor rgbcolor "#00aa33"
-set label 2 "Southern directions" at screen 0.59,0.850 front textcolor rgbcolor "#ff2200"
+set term post eps enhanced color solid "Helvetica" 18
+set label 1 "Northern directions" at screen 0.50,0.790 front textcolor rgbcolor "#00aa33"
+set label 2 "Southern directions" at screen 0.50,0.830 front textcolor rgbcolor "#ff2200"
+set label 3 "Data points/m^2" at screen 0.875,0.50 rotate by 90
 
 set size noratio
 set size 0.90,1
+set lmargin at screen 0.14 # eliminate clipping bugs
+set rmargin at screen 0.74 # eliminate clipping bugs
+set autoscale fix
 
 set xrange [-550:-150]
 set yrange [1155:1185]
@@ -61,7 +66,7 @@ set palette defined ( 0 "white", 10 "yellow", 30 "orange", \
 splot infile u ($1):($2):(toSouth3($3)*zVal($4))  t "" w p palette ps 0.30
 unset multiplot
 
-#quit
+
 
 ################ WhatToDo=2 #################
 infile=sprintf("%s.heatmap2",proj)   # unrotated, with WhatToDo=2
@@ -72,11 +77,15 @@ print "plotting ",epsfile
 
 #set size square
 set size ratio -1
-set term post eps enhanced color solid "Helvetica" 12
+set term post eps enhanced color solid "Helvetica" 18
 
+set label 1 "Northern directions" at screen 0.50,0.750 front textcolor rgbcolor "#00aa33"
+set label 2 "Southern directions" at screen 0.50,0.790 front textcolor rgbcolor "#ff2200"
 
-set xrange [-450:100]    # for unrotated setting
+set xrange [-410:100]    # for unrotated setting
+set xtics 100
 set yrange [1000:1380]   # for unrotated setting
+set ytics 100
 
 set multiplot
 set palette defined ( 0 "white", 5 "green", 30 "blue", \

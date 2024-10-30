@@ -2,7 +2,7 @@
 
 ###########################################################
 # sources including embedded models:
-# trafficSim/sources/levmar-2.5/calibTraj.cpp
+# trafficSim/sources/calibLevmar/calibTraj.cpp
 # (there also calibDiscrChoice.cpp)
 ###########################################################
 

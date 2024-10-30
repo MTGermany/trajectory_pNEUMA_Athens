@@ -42,9 +42,9 @@ set yrange [0:375]
 
 #############################################
 # laneRef=2; lanePlot=2; set xrange [650:900]  # left w/o motorcycles
- laneRef=1; lanePlot=1; set xrange [190:350]   # right w/ motorcycles
+# laneRef=1; lanePlot=1; set xrange [190:350]   # right w/ motorcycles
 # laneRef=3; lanePlot=3; set xrange [650:900] # reverse left w/o motorcycles
-# laneRef=4; lanePlot=4; set xrange [650:900] # reverse right w/ motorcycles
+ laneRef=4; lanePlot=4; set xrange [650:900] # reverse right w/ motorcycles
 
 infile=sprintf("%s.road%i.traj", proj, laneRef)
 epsfile=sprintf("%s_road%i_lane%i_xt_TGF.eps", proj, laneRef, lanePlot)
@@ -54,6 +54,7 @@ str_lanePlotMotoLeft=sprintf("lane=%i, motos left",lanePlot)
 str_lanePlotMotoRight=sprintf("lane=%i, motos right",lanePlot)
 #############################################
 
+#print "infile= ",infile; quit
 set out epsfile
 print "plotting ",epsfile
 plot\
